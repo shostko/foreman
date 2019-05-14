@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package by.shostko.statusprocessor
+package by.shostko.statusprocessor.worker
 
 import android.content.Context
 import androidx.annotation.CallSuper
