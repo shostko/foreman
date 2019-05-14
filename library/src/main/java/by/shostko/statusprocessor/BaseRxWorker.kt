@@ -8,6 +8,7 @@ import androidx.work.Data
 import androidx.work.RxWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import by.shostko.statusprocessor.Const.KEY_ERROR_CLASS
 import by.shostko.statusprocessor.Const.KEY_ERROR_MESSAGE
 import by.shostko.statusprocessor.Const.KEY_ERROR_MESSAGE_LOCALIZED
 import io.reactivex.Completable
@@ -16,6 +17,7 @@ import io.reactivex.Single
 abstract class BaseRxWorker(context: Context, workerParameters: WorkerParameters) : RxWorker(context, workerParameters) {
 
     internal open fun throwableToData(throwable: Throwable): Data = workDataOf(
+        KEY_ERROR_CLASS to throwable::class.java.canonicalName,
         KEY_ERROR_MESSAGE to throwable.message,
         KEY_ERROR_MESSAGE_LOCALIZED to throwable.localizedMessage
     )
