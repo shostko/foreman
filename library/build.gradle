@@ -9,7 +9,7 @@ publish {
     repoName = 'android'
     groupId = 'by.shostko'
     artifactId = 'status-processor-ktx'
-    publishVersion = '0.1.3'
+    publishVersion = '0.1.4'
     desc = 'Status handling helpers'
     website = 'https://github.com/shostko/market-southern'
 }
@@ -21,7 +21,7 @@ android {
         minSdkVersion 14
         targetSdkVersion 28
         versionCode 4
-        versionName "0.1.3"
+        versionName "0.1.4"
     }
 }
 
