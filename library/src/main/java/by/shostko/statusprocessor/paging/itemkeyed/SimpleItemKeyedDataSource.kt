@@ -2,13 +2,12 @@ package by.shostko.statusprocessor.paging.itemkeyed
 
 import by.shostko.statusprocessor.LoadingStatus
 import by.shostko.statusprocessor.StatusProcessor
-import by.shostko.statusprocessor.paging.positional.BasePositionalDataSource
 import timber.log.Timber
 
 @Suppress("unused")
 abstract class SimpleItemKeyedDataSource<K, V>(
     statusProcessor: StatusProcessor
-) : BasePositionalDataSource<K, V>(statusProcessor) {
+) : BaseItemKeyedDataSource<K, V>(statusProcessor) {
 
     override fun loadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<V>) {
         val key = params.requestedInitialKey
