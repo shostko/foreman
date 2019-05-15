@@ -13,20 +13,14 @@ abstract class SimpleItemKeyedDataSource<K, V>(
     }
 
     override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<V>) {
-        val key = nextKey(params.key)
-        val list = onLoad(key, params.requestedLoadSize)
+        val list = onLoad(params.key, params.requestedLoadSize)
         onSuccessResult(list, params, callback)
     }
 
     override fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<V>) {
-        val key = prevKey(params.key)
-        val list = onLoad(key, params.requestedLoadSize)
+        val list = onLoad(params.key, params.requestedLoadSize)
         onSuccessResult(list, params, callback)
     }
-
-    protected abstract fun nextKey(key: K): K?
-
-    protected abstract fun prevKey(key: K): K?
 
     @Throws(Throwable::class)
     protected abstract fun onLoad(key: K?, requestedLoadSize: Int): List<V>

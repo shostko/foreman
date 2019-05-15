@@ -16,8 +16,7 @@ abstract class AsyncItemKeyedDataSource<K, V>(
     }
 
     override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<V>) {
-        val key = nextKey(params.key)
-        onLoad(key, params.requestedLoadSize, CallbackImpl({
+        onLoad(params.key, params.requestedLoadSize, CallbackImpl({
             onSuccessResult(it, params, callback)
         }, {
             onFailedResultAfter(it, params, callback)
@@ -25,17 +24,12 @@ abstract class AsyncItemKeyedDataSource<K, V>(
     }
 
     override fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<V>) {
-        val key = prevKey(params.key)
-        onLoad(key, params.requestedLoadSize, CallbackImpl({
+        onLoad(params.key, params.requestedLoadSize, CallbackImpl({
             onSuccessResult(it, params, callback)
         }, {
             onFailedResultBefore(it, params, callback)
         }))
     }
-
-    protected abstract fun nextKey(key: K): K?
-
-    protected abstract fun prevKey(key: K): K?
 
     @Throws(Throwable::class)
     protected abstract fun onLoad(key: K?, requestedLoadSize: Int, callback: Callback<V>)
