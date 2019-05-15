@@ -1,10 +1,10 @@
 package by.shostko.statusprocessor.paging.singlerequest
 
-import by.shostko.statusprocessor.StatusProcessor
+import by.shostko.statusprocessor.BaseStatusProcessor
 import by.shostko.statusprocessor.paging.pagekeyed.BasePageKeyedDataSource
 
 @Suppress("unused")
-abstract class AsyncSingleRequestDataSource<V>(statusProcessor: StatusProcessor) :
+abstract class AsyncSingleRequestDataSource<V>(statusProcessor: BaseStatusProcessor<*>) :
     BasePageKeyedDataSource<Int, V>(statusProcessor) {
 
     override fun onLoadInitial(params: LoadInitialParams<Int>, callback: LoadInitialCallback<Int, V>) {

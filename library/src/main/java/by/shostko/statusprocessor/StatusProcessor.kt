@@ -26,6 +26,10 @@ class StatusProcessor(lifecycleOwner: LifecycleOwner) : BaseStatusProcessor<Load
 
     override fun createStatusLoading(): LoadingStatus = LoadingStatus.loading()
 
+    override fun createStatusLoadingForward(): LoadingStatus = LoadingStatus.loadingForward()
+
+    override fun createStatusLoadingBackward(): LoadingStatus = LoadingStatus.loadingBackward()
+
     override fun createStatusError(throwable: Throwable): LoadingStatus = LoadingStatus.error(throwable)
 
     override fun createStatusError(workerResult: Data): LoadingStatus = LoadingStatus.fromWorkerFailedData(workerResult)
@@ -59,7 +63,25 @@ abstract class BaseStatusProcessor<STATUS>(private val lifecycleOwner: Lifecycle
         statusProcessor.onNext(loadingStatus)
     }
 
+    fun updateLoading() = update(createStatusLoading())
+
+    fun updateLoadingForward() = update(createStatusLoadingForward())
+
+    fun updateLoadingBackward() = update(createStatusLoadingBackward())
+
+    fun updateError(throwable: Throwable) = update(createStatusError(throwable))
+
+    fun updateError(workerResult: Data) = update(createStatusError(workerResult))
+
+    fun updateSuccess() = update(createStatusSuccess())
+
+    fun updateSuccess(workerResult: Data) = update(createStatusSuccess(workerResult))
+
     protected abstract fun createStatusLoading(): STATUS
+
+    protected abstract fun createStatusLoadingForward(): STATUS
+
+    protected abstract fun createStatusLoadingBackward(): STATUS
 
     protected abstract fun createStatusError(throwable: Throwable): STATUS
 
@@ -79,9 +101,9 @@ abstract class BaseStatusProcessor<STATUS>(private val lifecycleOwner: Lifecycle
                             .observe(lifecycleOwner, Observer { info ->
                                 info?.state?.let {
                                     when {
-                                        !it.isFinished -> update(createStatusLoading())
-                                        it == WorkInfo.State.FAILED -> update(createStatusError(info.outputData))
-                                        else -> update(createStatusSuccess(info.outputData))
+                                        !it.isFinished -> updateLoading()
+                                        it == WorkInfo.State.FAILED -> updateError(info.outputData)
+                                        else -> updateSuccess(info.outputData)
                                     }
                                 }
                             })
@@ -98,12 +120,12 @@ abstract class BaseStatusProcessor<STATUS>(private val lifecycleOwner: Lifecycle
 
     fun <T> wrapSingleRequest(errorItem: T, callable: () -> Single<T>): Flowable<T> =
         action.startWith(Action.REFRESH)
-            .doOnNext { update(createStatusLoading()) }
+            .doOnNext { updateLoading() }
             .switchMapSingle {
                 callable.invoke()
                     .subscribeOn(Schedulers.io())
-                    .doOnSuccess { update(createStatusSuccess()) }
-                    .doOnError { update(createStatusError(it)) }
+                    .doOnSuccess { updateSuccess() }
+                    .doOnError { updateError(it) }
                     .onErrorReturnItem(errorItem)
             }
 }

@@ -1,10 +1,10 @@
 package by.shostko.statusprocessor.paging.positional
 
-import by.shostko.statusprocessor.StatusProcessor
+import by.shostko.statusprocessor.BaseStatusProcessor
 
 @Suppress("unused")
 abstract class SimplePositionalDataSource<V>(
-    statusProcessor: StatusProcessor
+    statusProcessor: BaseStatusProcessor<*>
 ) : BasePositionalDataSource<V>(statusProcessor) {
 
     override fun onLoadInitial(params: LoadInitialParams, callback: LoadInitialCallback<V>) {

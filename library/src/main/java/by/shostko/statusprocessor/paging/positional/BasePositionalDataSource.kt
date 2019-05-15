@@ -2,8 +2,8 @@ package by.shostko.statusprocessor.paging.positional
 
 import android.annotation.SuppressLint
 import by.shostko.statusprocessor.Action
+import by.shostko.statusprocessor.BaseStatusProcessor
 import by.shostko.statusprocessor.LoadingStatus
-import by.shostko.statusprocessor.StatusProcessor
 import by.shostko.statusprocessor.extension.asString
 import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
 import com.uber.autodispose.autoDisposable
@@ -13,7 +13,7 @@ import timber.log.Timber
 @Suppress("MemberVisibilityCanBePrivate", "unused")
 @SuppressLint("CheckResult")
 abstract class BasePositionalDataSource<V>(
-    protected val statusProcessor: StatusProcessor
+    protected val statusProcessor: BaseStatusProcessor<*>
 ) : PositionalLifecycledDataSource<V>() {
 
     protected open val tag: String = javaClass.simpleName
@@ -38,7 +38,7 @@ abstract class BasePositionalDataSource<V>(
 
     final override fun loadInitial(params: LoadInitialParams, callback: LoadInitialCallback<V>) {
         Timber.tag(tag).d("loadInitial for %s", params.asString())
-        statusProcessor.update(LoadingStatus.loading())
+        statusProcessor.updateLoading()
         try {
             onLoadInitial(params, callback)
         } catch (e: Throwable) {
@@ -50,7 +50,7 @@ abstract class BasePositionalDataSource<V>(
 
     final override fun loadRange(params: LoadRangeParams, callback: LoadRangeCallback<V>) {
         Timber.tag(tag).d("loadRange for %s", params.asString())
-        statusProcessor.update(LoadingStatus.loading())
+        statusProcessor.updateLoading()
         try {
             onLoadRange(params, callback)
         } catch (e: Throwable) {
@@ -95,7 +95,7 @@ abstract class BasePositionalDataSource<V>(
         callback: LoadInitialCallback<V>
     ) {
         retryFunction = null
-        statusProcessor.update(LoadingStatus.success())
+        statusProcessor.updateSuccess()
         callback.onResult(list, frontPosition, totalCount)
     }
 
@@ -106,7 +106,7 @@ abstract class BasePositionalDataSource<V>(
         callback: LoadInitialCallback<V>
     ) {
         retryFunction = null
-        statusProcessor.update(LoadingStatus.success())
+        statusProcessor.updateSuccess()
         callback.onResult(list, frontPosition)
     }
 
@@ -116,7 +116,7 @@ abstract class BasePositionalDataSource<V>(
         callback: LoadInitialCallback<V>
     ) {
         retryFunction = null
-        statusProcessor.update(LoadingStatus.success())
+        statusProcessor.updateSuccess()
         callback.onResult(list, params.requestedStartPosition)
     }
 
@@ -126,7 +126,7 @@ abstract class BasePositionalDataSource<V>(
         callback: LoadRangeCallback<V>
     ) {
         retryFunction = null
-        statusProcessor.update(LoadingStatus.success())
+        statusProcessor.updateSuccess()
         callback.onResult(list)
     }
 
@@ -137,7 +137,7 @@ abstract class BasePositionalDataSource<V>(
     ) {
         Timber.tag(tag).e(e, "Error during loadInitial for %s", params.asString())
         retryFunction = { loadInitial(params, callback) }
-        statusProcessor.update(LoadingStatus.error(e))
+        statusProcessor.updateError(e)
     }
 
     protected fun onFailedResult(
@@ -147,6 +147,6 @@ abstract class BasePositionalDataSource<V>(
     ) {
         Timber.tag(tag).e(e, "Error during loadAfter for %s", params.asString())
         retryFunction = { loadRange(params, callback) }
-        statusProcessor.update(LoadingStatus.error(e))
+        statusProcessor.updateError(e)
     }
 }
