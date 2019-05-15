@@ -40,25 +40,22 @@ abstract class AsyncItemKeyedDataSource<K, V>(
     @Throws(Throwable::class)
     protected abstract fun onLoad(key: K?, requestedLoadSize: Int, callback: Callback<V>)
 
-    companion object {
+    protected abstract class Callback<V> {
+        abstract fun onSuccessResult(list: List<V>)
+        abstract fun onFailedResult(e: Throwable)
+    }
 
-        abstract class Callback<V> {
-            abstract fun onSuccessResult(list: List<V>)
-            abstract fun onFailedResult(e: Throwable)
+    private class CallbackImpl<V>(
+        private val successFun: ((List<V>) -> Any),
+        private val failedFun: ((Throwable) -> Any)
+    ) : Callback<V>() {
+
+        override fun onSuccessResult(list: List<V>) {
+            successFun.invoke(list)
         }
 
-        private class CallbackImpl<V>(
-            private val successFun: ((List<V>) -> Any),
-            private val failedFun: ((Throwable) -> Any)
-        ) : Callback<V>() {
-
-            override fun onSuccessResult(list: List<V>) {
-                successFun.invoke(list)
-            }
-
-            override fun onFailedResult(e: Throwable) {
-                failedFun.invoke(e)
-            }
+        override fun onFailedResult(e: Throwable) {
+            failedFun.invoke(e)
         }
     }
 }
