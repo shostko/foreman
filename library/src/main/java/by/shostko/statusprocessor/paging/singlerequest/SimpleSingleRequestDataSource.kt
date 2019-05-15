@@ -4,7 +4,7 @@ import by.shostko.statusprocessor.StatusProcessor
 import by.shostko.statusprocessor.paging.pagekeyed.BasePageKeyedDataSource
 
 @Suppress("unused")
-abstract class SingleRequestDataSource<V>(statusProcessor: StatusProcessor) :
+abstract class SimpleSingleRequestDataSource<V>(statusProcessor: StatusProcessor) :
     BasePageKeyedDataSource<Int, V>(statusProcessor) {
 
     override fun onLoadInitial(params: LoadInitialParams<Int>, callback: LoadInitialCallback<Int, V>) {
