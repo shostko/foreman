@@ -3,7 +3,6 @@
 package by.shostko.statusprocessor.worker
 
 import android.content.Context
-import androidx.annotation.CallSuper
 import androidx.work.Data
 import androidx.work.RxWorker
 import androidx.work.WorkerParameters
@@ -27,8 +26,7 @@ abstract class BaseRxWorker(context: Context, workerParameters: WorkerParameters
 
 abstract class BaseRxSingleWorker(context: Context, workerParameters: WorkerParameters) : BaseRxWorker(context, workerParameters) {
 
-    @CallSuper
-    override fun createWork(): Single<Result> = createSingleWork()
+    final override fun createWork(): Single<Result> = createSingleWork()
         .onErrorReturn(this::throwableToResult)
 
     protected abstract fun createSingleWork(): Single<Result>
@@ -36,8 +34,7 @@ abstract class BaseRxSingleWorker(context: Context, workerParameters: WorkerPara
 
 abstract class BaseRxCompletableWorker(context: Context, workerParameters: WorkerParameters) : BaseRxWorker(context, workerParameters) {
 
-    @CallSuper
-    override fun createWork(): Single<Result> = createCompletableWork()
+    final override fun createWork(): Single<Result> = createCompletableWork()
         .toSingleDefault(Result.success())
         .onErrorReturn(this::throwableToResult)
 
