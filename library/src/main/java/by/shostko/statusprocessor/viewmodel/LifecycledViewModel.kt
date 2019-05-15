@@ -1,4 +1,4 @@
-package by.shostko.statusprocessor
+package by.shostko.statusprocessor.viewmodel
 
 import androidx.annotation.CallSuper
 import androidx.lifecycle.Lifecycle
