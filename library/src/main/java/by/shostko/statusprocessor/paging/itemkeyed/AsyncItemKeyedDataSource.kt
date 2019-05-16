@@ -7,24 +7,24 @@ abstract class AsyncItemKeyedDataSource<K, V>(
     statusProcessor: BaseStatusProcessor<*>
 ) : BaseItemKeyedDataSource<K, V>(statusProcessor) {
 
-    override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<V>) {
-        onLoad(params.requestedInitialKey, params.requestedLoadSize, CallbackImpl({
+    final override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<V>) {
+        onLoadInitial(params.requestedInitialKey, params.requestedLoadSize, CallbackImpl({
             onSuccessResult(it, params, callback)
         }, {
             onFailedResultInitial(it, params, callback)
         }))
     }
 
-    override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<V>) {
-        onLoad(params.key, params.requestedLoadSize, CallbackImpl({
+    final override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<V>) {
+        onLoadAfter(params.key, params.requestedLoadSize, CallbackImpl({
             onSuccessResult(it, params, callback)
         }, {
             onFailedResultAfter(it, params, callback)
         }))
     }
 
-    override fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<V>) {
-        onLoad(params.key, params.requestedLoadSize, CallbackImpl({
+    final override fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<V>) {
+        onLoadBefore(params.key, params.requestedLoadSize, CallbackImpl({
             onSuccessResult(it, params, callback)
         }, {
             onFailedResultBefore(it, params, callback)
@@ -32,7 +32,13 @@ abstract class AsyncItemKeyedDataSource<K, V>(
     }
 
     @Throws(Throwable::class)
-    protected abstract fun onLoad(key: K?, requestedLoadSize: Int, callback: Callback<V>)
+    protected abstract fun onLoadInitial(key: K?, requestedLoadSize: Int, callback: Callback<V>)
+
+    @Throws(Throwable::class)
+    protected abstract fun onLoadAfter(key: K, requestedLoadSize: Int, callback: Callback<V>)
+
+    @Throws(Throwable::class)
+    protected abstract fun onLoadBefore(key: K, requestedLoadSize: Int, callback: Callback<V>)
 
     protected abstract class Callback<V> {
         abstract fun onSuccessResult(list: List<V>)

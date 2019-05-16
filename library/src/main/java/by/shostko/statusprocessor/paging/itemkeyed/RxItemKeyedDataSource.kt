@@ -15,8 +15,8 @@ abstract class RxItemKeyedDataSource<K, V>(
 
     private val scopeProvider by lazy { AndroidLifecycleScopeProvider.from(this) }
 
-    override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<V>) {
-        onLoad(params.requestedInitialKey, params.requestedLoadSize)
+    final override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<V>) {
+        onLoadInitial(params.requestedInitialKey, params.requestedLoadSize)
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .autoDisposable(scopeProvider)
@@ -27,8 +27,8 @@ abstract class RxItemKeyedDataSource<K, V>(
             })
     }
 
-    override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<V>) {
-        onLoad(params.key, params.requestedLoadSize)
+    final override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<V>) {
+        onLoadAfter(params.key, params.requestedLoadSize)
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .autoDisposable(scopeProvider)
@@ -39,8 +39,8 @@ abstract class RxItemKeyedDataSource<K, V>(
             })
     }
 
-    override fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<V>) {
-        onLoad(params.key, params.requestedLoadSize)
+    final override fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<V>) {
+        onLoadBefore(params.key, params.requestedLoadSize)
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .autoDisposable(scopeProvider)
@@ -52,5 +52,11 @@ abstract class RxItemKeyedDataSource<K, V>(
     }
 
     @Throws(Throwable::class)
-    protected abstract fun onLoad(key: K?, requestedLoadSize: Int): Single<List<V>>
+    protected abstract fun onLoadInitial(key: K?, requestedLoadSize: Int): Single<List<V>>
+
+    @Throws(Throwable::class)
+    protected abstract fun onLoadAfter(key: K?, requestedLoadSize: Int): Single<List<V>>
+
+    @Throws(Throwable::class)
+    protected abstract fun onLoadBefore(key: K?, requestedLoadSize: Int): Single<List<V>>
 }

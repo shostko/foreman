@@ -7,21 +7,27 @@ abstract class SimpleItemKeyedDataSource<K, V>(
     statusProcessor: BaseStatusProcessor<*>
 ) : BaseItemKeyedDataSource<K, V>(statusProcessor) {
 
-    override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<V>) {
-        val list = onLoad(params.requestedInitialKey, params.requestedLoadSize)
+    final override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<V>) {
+        val list = onLoadInitial(params.requestedInitialKey, params.requestedLoadSize)
         onSuccessResult(list, params, callback)
     }
 
-    override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<V>) {
-        val list = onLoad(params.key, params.requestedLoadSize)
+    final override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<V>) {
+        val list = onLoadAfter(params.key, params.requestedLoadSize)
         onSuccessResult(list, params, callback)
     }
 
-    override fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<V>) {
-        val list = onLoad(params.key, params.requestedLoadSize)
+    final override fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<V>) {
+        val list = onLoadBefore(params.key, params.requestedLoadSize)
         onSuccessResult(list, params, callback)
     }
 
     @Throws(Throwable::class)
-    protected abstract fun onLoad(key: K?, requestedLoadSize: Int): List<V>
+    protected abstract fun onLoadInitial(key: K?, requestedLoadSize: Int): List<V>
+
+    @Throws(Throwable::class)
+    protected abstract fun onLoadAfter(key: K, requestedLoadSize: Int): List<V>
+
+    @Throws(Throwable::class)
+    protected abstract fun onLoadBefore(key: K, requestedLoadSize: Int): List<V>
 }
