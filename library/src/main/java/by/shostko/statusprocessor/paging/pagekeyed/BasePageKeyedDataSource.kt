@@ -1,6 +1,8 @@
 package by.shostko.statusprocessor.paging.pagekeyed
 
 import android.annotation.SuppressLint
+import android.os.Handler
+import android.os.Looper
 import by.shostko.statusprocessor.Action
 import by.shostko.statusprocessor.BaseStatusProcessor
 import by.shostko.statusprocessor.extension.asString
@@ -22,17 +24,19 @@ abstract class BasePageKeyedDataSource<K, V>(
     private var retryFunction: (() -> Any)? = null
 
     init {
-        statusProcessor.action
-            .subscribeOn(Schedulers.io())
-            .observeOn(Schedulers.io())
-            .autoDisposable(scopeProvider)
-            .subscribe({
-                Timber.tag(tag).d("%s action requested", it)
-                when (it) {
-                    Action.RETRY -> retryFunction?.apply { retryFunction = null }?.invoke()
-                    else -> invalidate()
-                }
-            }, { Timber.tag(tag).e(it, "Error during listening actions") })
+        Handler(Looper.getMainLooper()).post {
+            statusProcessor.action
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .autoDisposable(scopeProvider)
+                .subscribe({
+                    Timber.tag(tag).d("%s action requested", it)
+                    when (it) {
+                        Action.RETRY -> retryFunction?.apply { retryFunction = null }?.invoke()
+                        else -> invalidate()
+                    }
+                }, { Timber.tag(tag).e(it, "Error during listening actions") })
+        }
     }
 
     final override fun loadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<K, V>) {
