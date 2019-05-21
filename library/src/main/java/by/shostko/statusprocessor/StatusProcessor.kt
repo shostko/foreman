@@ -40,7 +40,7 @@ class StatusProcessor(lifecycleOwner: LifecycleOwner) : BaseStatusProcessor<Load
 }
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
-abstract class BaseStatusProcessor<STATUS>(private val lifecycleOwner: LifecycleOwner) {
+abstract class BaseStatusProcessor<STATUS : BaseLoadingStatus<*>>(private val lifecycleOwner: LifecycleOwner) {
 
     @Suppress("LeakingThis")
     private val statusProcessor: FlowableProcessor<STATUS> = BehaviorProcessor.createDefault(createStatusLoading())

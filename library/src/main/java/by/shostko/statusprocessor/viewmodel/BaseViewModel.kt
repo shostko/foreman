@@ -1,25 +1,26 @@
 package by.shostko.statusprocessor.viewmodel
 
 import androidx.annotation.CallSuper
+import androidx.lifecycle.LifecycleOwner
 import androidx.recyclerview.widget.RecyclerView
+import by.shostko.statusprocessor.BaseLoadingStatus
+import by.shostko.statusprocessor.BaseStatusProcessor
 import by.shostko.statusprocessor.Direction
-import by.shostko.statusprocessor.StatusProcessor
 import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
 import io.reactivex.processors.BehaviorProcessor
 
 @Suppress("unused")
-abstract class BaseViewModel : LifecycledViewModel() {
+abstract class BaseViewModel<E>(
+    private val noError: E,
+    statusProcessorCreator: (LifecycleOwner) -> BaseStatusProcessor<out BaseLoadingStatus<E>>
+) : LifecycledViewModel() {
 
-    companion object {
-        private const val EMPTY = ""
-    }
-
-    protected val statusProcessor by lazy { StatusProcessor(this) }
+    protected val statusProcessor by lazy { statusProcessorCreator.invoke(this) }
 
     private val itemCountFlowableProcessor = BehaviorProcessor.createDefault(true)
 
-    private val messageFlowableProcessor = BehaviorProcessor.createDefault(EMPTY)
+    private val errorFlowableProcessor = BehaviorProcessor.createDefault(noError)
 
     private var adapterDataObserver: AdapterObserver? = null
 
@@ -39,21 +40,21 @@ abstract class BaseViewModel : LifecycledViewModel() {
         })
         .distinctUntilChanged()
 
-    val error: Flowable<String> = Flowable.merge(
-        statusProcessor.status.map { it.message ?: EMPTY },
-        messageFlowableProcessor
+    val error: Flowable<E> = Flowable.merge(
+        statusProcessor.status.map { it.error ?: noError },
+        errorFlowableProcessor
     )
         .distinctUntilChanged()
 
     @CallSuper
     open fun retry() {
-        messageFlowableProcessor.onNext(EMPTY)
+        errorFlowableProcessor.onNext(noError)
         statusProcessor.retry()
     }
 
     @CallSuper
     open fun refresh() {
-        messageFlowableProcessor.onNext(EMPTY)
+        errorFlowableProcessor.onNext(noError)
         statusProcessor.refresh()
     }
 
