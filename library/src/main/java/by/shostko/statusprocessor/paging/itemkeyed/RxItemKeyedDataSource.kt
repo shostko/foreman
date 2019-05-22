@@ -5,50 +5,61 @@ import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
 import com.uber.autodispose.autoDisposable
 import io.reactivex.Scheduler
 import io.reactivex.Single
-import io.reactivex.schedulers.Schedulers
 
 @Suppress("unused")
 abstract class RxItemKeyedDataSource<K, V>(
     statusProcessor: BaseStatusProcessor<*>,
-    private val scheduler: Scheduler = Schedulers.io()
-    ) : BaseItemKeyedDataSource<K, V>(statusProcessor) {
+    private val scheduler: Scheduler? = null
+) : BaseItemKeyedDataSource<K, V>(statusProcessor) {
 
     private val scopeProvider by lazy { AndroidLifecycleScopeProvider.from(this) }
 
     final override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<V>) {
-        onLoadInitial(params.requestedInitialKey, params.requestedLoadSize)
-            .subscribeOn(scheduler)
-            .observeOn(scheduler)
-            .autoDisposable(scopeProvider)
-            .subscribe({
-                onSuccessResult(it, params, callback)
-            }, {
-                onFailedResultInitial(it, params, callback)
-            })
+        val single = onLoadInitial(params.requestedInitialKey, params.requestedLoadSize)
+        if (scheduler == null) {
+            onSuccessResult(single.blockingGet(), params, callback)
+        } else {
+            single.subscribeOn(scheduler)
+                .observeOn(scheduler)
+                .autoDisposable(scopeProvider)
+                .subscribe({
+                    onSuccessResult(it, params, callback)
+                }, {
+                    onFailedResultInitial(it, params, callback)
+                })
+        }
     }
 
     final override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<V>) {
-        onLoadAfter(params.key, params.requestedLoadSize)
-            .subscribeOn(scheduler)
-            .observeOn(scheduler)
-            .autoDisposable(scopeProvider)
-            .subscribe({
-                onSuccessResult(it, params, callback)
-            }, {
-                onFailedResultAfter(it, params, callback)
-            })
+        val single = onLoadAfter(params.key, params.requestedLoadSize)
+        if (scheduler == null) {
+            onSuccessResult(single.blockingGet(), params, callback)
+        } else {
+            single.subscribeOn(scheduler)
+                .observeOn(scheduler)
+                .autoDisposable(scopeProvider)
+                .subscribe({
+                    onSuccessResult(it, params, callback)
+                }, {
+                    onFailedResultAfter(it, params, callback)
+                })
+        }
     }
 
     final override fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<V>) {
-        onLoadBefore(params.key, params.requestedLoadSize)
-            .subscribeOn(scheduler)
-            .observeOn(scheduler)
-            .autoDisposable(scopeProvider)
-            .subscribe({
-                onSuccessResult(it, params, callback)
-            }, {
-                onFailedResultBefore(it, params, callback)
-            })
+        val single = onLoadBefore(params.key, params.requestedLoadSize)
+        if (scheduler == null) {
+            onSuccessResult(single.blockingGet(), params, callback)
+        } else {
+            single.subscribeOn(scheduler)
+                .observeOn(scheduler)
+                .autoDisposable(scopeProvider)
+                .subscribe({
+                    onSuccessResult(it, params, callback)
+                }, {
+                    onFailedResultBefore(it, params, callback)
+                })
+        }
     }
 
     @Throws(Throwable::class)
