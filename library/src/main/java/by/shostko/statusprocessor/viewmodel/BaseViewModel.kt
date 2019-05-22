@@ -18,7 +18,7 @@ abstract class BaseViewModel<E>(
 
     protected val statusProcessor by lazy { statusProcessorCreator.invoke(this) }
 
-    protected val itemCountFlowableProcessor = BehaviorProcessor.createDefault(true)
+    protected val itemsEmptyFlowableProcessor = BehaviorProcessor.createDefault(true)
 
     private val errorFlowableProcessor = BehaviorProcessor.createDefault(noError)
 
@@ -28,7 +28,7 @@ abstract class BaseViewModel<E>(
         statusProcessor.status
             .distinctUntilChanged()
             .map { it.direction },
-        itemCountFlowableProcessor
+        itemsEmptyFlowableProcessor
             .distinctUntilChanged(),
         BiFunction<Direction, Boolean, Direction> { direction, isEmpty ->
             when {
@@ -59,7 +59,7 @@ abstract class BaseViewModel<E>(
     }
 
     protected fun postCollectionSize(itemCount: Int) {
-        itemCountFlowableProcessor.onNext(itemCount == 0)
+        itemsEmptyFlowableProcessor.onNext(itemCount == 0)
     }
 
     fun registerWith(adapter: RecyclerView.Adapter<*>) {
