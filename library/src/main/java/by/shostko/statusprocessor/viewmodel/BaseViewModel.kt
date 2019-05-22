@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.RecyclerView
 import by.shostko.statusprocessor.BaseLoadingStatus
 import by.shostko.statusprocessor.BaseStatusProcessor
 import by.shostko.statusprocessor.Direction
+import by.shostko.statusprocessor.RealItemsCountProvider
 import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
 import io.reactivex.processors.BehaviorProcessor
@@ -22,7 +23,7 @@ abstract class BaseViewModel<E>(
 
     private val errorFlowableProcessor = BehaviorProcessor.createDefault(noError)
 
-    private var adapterDataObserver: AdapterObserver? = null
+    private var itemsDataObserver: BaseItemsObserver? = null
 
     val progress: Flowable<Direction> = Flowable.combineLatest(
         statusProcessor.status
@@ -63,25 +64,25 @@ abstract class BaseViewModel<E>(
     }
 
     fun registerWith(adapter: RecyclerView.Adapter<*>) {
-        if (adapterDataObserver != null) {
+        if (itemsDataObserver != null) {
             throw UnsupportedOperationException("You need to unregister from previous adapter!")
         }
-        adapterDataObserver = AdapterObserver(adapter)
-        adapter.registerAdapterDataObserver(adapterDataObserver!!)
+        itemsDataObserver = if (adapter is RealItemsCountProvider) {
+            RealItemsObserver(adapter)
+        } else {
+            RecyclerItemsObserver(adapter)
+        }
+        itemsDataObserver?.let { adapter.registerAdapterDataObserver(it) }
     }
 
     fun unregisterFrom(adapter: RecyclerView.Adapter<*>) {
-        if (adapterDataObserver?.adapter == adapter) {
-            adapter.unregisterAdapterDataObserver(adapterDataObserver!!)
-            adapterDataObserver = null
+        if (itemsDataObserver?.anchor === adapter) {
+            adapter.unregisterAdapterDataObserver(itemsDataObserver!!)
+            itemsDataObserver = null
         }
     }
 
-    private inner class AdapterObserver(internal val adapter: RecyclerView.Adapter<*>) : RecyclerView.AdapterDataObserver() {
-
-        override fun onChanged() {
-            postCollectionSize(adapter.itemCount)
-        }
+    private abstract inner class BaseItemsObserver(internal val anchor: Any) : RecyclerView.AdapterDataObserver() {
 
         override fun onItemRangeChanged(positionStart: Int, itemCount: Int) {
             onChanged()
@@ -101,6 +102,18 @@ abstract class BaseViewModel<E>(
 
         override fun onItemRangeMoved(fromPosition: Int, toPosition: Int, itemCount: Int) {
             onChanged()
+        }
+    }
+
+    private inner class RecyclerItemsObserver(internal val adapter: RecyclerView.Adapter<*>) : BaseItemsObserver(adapter) {
+        override fun onChanged() {
+            postCollectionSize(adapter.itemCount)
+        }
+    }
+
+    private inner class RealItemsObserver(internal val adapter: RealItemsCountProvider) : BaseItemsObserver(adapter) {
+        override fun onChanged() {
+            postCollectionSize(adapter.getRealItemsCount())
         }
     }
 }
