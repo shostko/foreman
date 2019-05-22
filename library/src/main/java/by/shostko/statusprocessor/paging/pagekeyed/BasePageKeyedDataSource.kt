@@ -82,6 +82,10 @@ abstract class BasePageKeyedDataSource<K, V>(
         params: LoadInitialParams<K>,
         callback: LoadInitialCallback<K, V>
     ) {
+        Timber.tag(tag).d(
+            "onSuccessResult %d items (previousPageKey=%s, nextPageKey=%s) for %s",
+            list.size, previousPageKey, nextPageKey, params.asString()
+        )
         retryFunction = null
         statusProcessor.updateSuccess()
         callback.onResult(list, previousPageKey, nextPageKey)
@@ -93,6 +97,10 @@ abstract class BasePageKeyedDataSource<K, V>(
         params: LoadParams<K>,
         callback: LoadCallback<K, V>
     ) {
+        Timber.tag(tag).d(
+            "onSuccessResult %d items (nextPageKey=%s) for %s",
+            list.size, nextPageKey, params.asString()
+        )
         retryFunction = null
         statusProcessor.updateSuccess()
         callback.onResult(list, nextPageKey)
@@ -104,6 +112,10 @@ abstract class BasePageKeyedDataSource<K, V>(
         params: LoadParams<K>,
         callback: LoadCallback<K, V>
     ) {
+        Timber.tag(tag).d(
+            "onSuccessResult %d items (previousPageKey=%s) for %s",
+            list.size, previousPageKey, params.asString()
+        )
         retryFunction = null
         statusProcessor.updateSuccess()
         callback.onResult(list, previousPageKey)

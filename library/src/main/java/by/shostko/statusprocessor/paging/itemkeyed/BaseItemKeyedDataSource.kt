@@ -83,6 +83,7 @@ abstract class BaseItemKeyedDataSource<K, V>(
         params: LoadInitialParams<K>,
         callback: LoadInitialCallback<V>
     ) {
+        Timber.tag(tag).d("onSuccessResult %d items for %s", list.size, params.asString())
         retryFunction = null
         statusProcessor.updateSuccess()
         callback.onResult(list)
@@ -93,6 +94,7 @@ abstract class BaseItemKeyedDataSource<K, V>(
         params: LoadParams<K>,
         callback: LoadCallback<V>
     ) {
+        Timber.tag(tag).d("onSuccessResult %d items for %s", list.size, params.asString())
         retryFunction = null
         statusProcessor.updateSuccess()
         callback.onResult(list)

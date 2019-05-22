@@ -5,7 +5,6 @@ import android.os.Handler
 import android.os.Looper
 import by.shostko.statusprocessor.Action
 import by.shostko.statusprocessor.BaseStatusProcessor
-import by.shostko.statusprocessor.LoadingStatus
 import by.shostko.statusprocessor.extension.asString
 import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
 import com.uber.autodispose.autoDisposable
@@ -64,33 +63,6 @@ abstract class BasePositionalDataSource<V>(
 
     protected abstract fun onLoadRange(params: LoadRangeParams, callback: LoadRangeCallback<V>)
 
-    protected fun onResult(
-        list: List<V>?,
-        position: Int?,
-        params: LoadInitialParams,
-        callback: LoadInitialCallback<V>
-    ) {
-        retryFunction = if (list == null || position == null) {
-            { loadInitial(params, callback) }
-        } else {
-            callback.onResult(list, position)
-            null
-        }
-    }
-
-    protected fun onResultRange(
-        list: List<V>?,
-        params: LoadRangeParams,
-        callback: LoadRangeCallback<V>
-    ) {
-        retryFunction = if (list == null) {
-            { loadRange(params, callback) }
-        } else {
-            callback.onResult(list)
-            null
-        }
-    }
-
     protected fun onSuccessResult(
         list: List<V>,
         frontPosition: Int,
@@ -98,6 +70,10 @@ abstract class BasePositionalDataSource<V>(
         params: LoadInitialParams,
         callback: LoadInitialCallback<V>
     ) {
+        Timber.tag(tag).d(
+            "onSuccessResult %d (frontPosition=%d, totalCount=%d) items for %s",
+            list.size, frontPosition, totalCount, params.asString()
+        )
         retryFunction = null
         statusProcessor.updateSuccess()
         callback.onResult(list, frontPosition, totalCount)
@@ -109,6 +85,10 @@ abstract class BasePositionalDataSource<V>(
         params: LoadInitialParams,
         callback: LoadInitialCallback<V>
     ) {
+        Timber.tag(tag).d(
+            "onSuccessResult %d (frontPosition=%d) items for %s",
+            list.size, frontPosition, params.asString()
+        )
         retryFunction = null
         statusProcessor.updateSuccess()
         callback.onResult(list, frontPosition)
@@ -119,6 +99,7 @@ abstract class BasePositionalDataSource<V>(
         params: LoadInitialParams,
         callback: LoadInitialCallback<V>
     ) {
+        Timber.tag(tag).d("onSuccessResult %d items for %s", list.size, params.asString())
         retryFunction = null
         statusProcessor.updateSuccess()
         callback.onResult(list, params.requestedStartPosition)
@@ -129,6 +110,7 @@ abstract class BasePositionalDataSource<V>(
         params: LoadRangeParams,
         callback: LoadRangeCallback<V>
     ) {
+        Timber.tag(tag).d("onSuccessResult %d items for %s", list.size, params.asString())
         retryFunction = null
         statusProcessor.updateSuccess()
         callback.onResult(list)
