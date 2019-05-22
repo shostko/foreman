@@ -10,7 +10,7 @@ import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
 import io.reactivex.processors.BehaviorProcessor
 
-@Suppress("unused")
+@Suppress("unused", "MemberVisibilityCanBePrivate")
 abstract class BaseViewModel<E>(
     private val noError: E,
     statusProcessorCreator: (LifecycleOwner) -> BaseStatusProcessor<out BaseLoadingStatus<E>>
@@ -18,7 +18,7 @@ abstract class BaseViewModel<E>(
 
     protected val statusProcessor by lazy { statusProcessorCreator.invoke(this) }
 
-    private val itemCountFlowableProcessor = BehaviorProcessor.createDefault(true)
+    protected val itemCountFlowableProcessor = BehaviorProcessor.createDefault(true)
 
     private val errorFlowableProcessor = BehaviorProcessor.createDefault(noError)
 
