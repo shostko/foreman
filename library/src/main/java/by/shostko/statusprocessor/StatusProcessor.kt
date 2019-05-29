@@ -121,11 +121,15 @@ abstract class BaseStatusProcessor<STATUS : BaseLoadingStatus<*>>(private val li
     fun <T> wrapSingleRequest(errorItem: T, callable: () -> Single<T>): Flowable<T> =
         action.startWith(Action.REFRESH)
             .doOnNext { updateLoading() }
-            .switchMapSingle {
-                callable.invoke()
+            .switchMapSingle { _ ->
+                Single.defer(callable)
                     .subscribeOn(Schedulers.io())
                     .doOnSuccess { updateSuccess() }
                     .doOnError { updateError(it) }
                     .onErrorReturnItem(errorItem)
             }
+
+    fun <T> wrapOneRequest(callable: () -> List<T>): Flowable<List<T>> = wrapOneRequest(emptyList(), callable)
+
+    fun <T> wrapOneRequest(errorItem: T, callable: () -> T): Flowable<T> = wrapSingleRequest(errorItem, { Single.just(callable.invoke()) })
 }
