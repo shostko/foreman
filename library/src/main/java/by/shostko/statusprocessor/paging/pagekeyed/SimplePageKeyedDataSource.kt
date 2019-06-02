@@ -17,13 +17,13 @@ abstract class SimplePageKeyedDataSource<K, V>(
 
     override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<K, V>) {
         val list = onLoad(params.key, params.requestedLoadSize)
-        val nextPageKey = nextKey(firstPageKey)
+        val nextPageKey = nextKey(params.key)
         onSuccessResultAfter(list, nextPageKey, params, callback)
     }
 
     override fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<K, V>) {
         val list = onLoad(params.key, params.requestedLoadSize)
-        val previousPageKey = prevKey(firstPageKey)
+        val previousPageKey = prevKey(params.key)
         onSuccessResultBefore(list, previousPageKey, params, callback)
     }
 

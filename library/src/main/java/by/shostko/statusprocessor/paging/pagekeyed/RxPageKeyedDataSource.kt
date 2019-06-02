@@ -40,14 +40,14 @@ abstract class RxPageKeyedDataSource<K, V>(
         val single = onLoad(params.key, params.requestedLoadSize)
         if (scheduler == null) {
             val result = single.blockingGet()
-            val nextPageKey = nextKey(firstPageKey)
+            val nextPageKey = nextKey(params.key)
             onSuccessResultAfter(result, nextPageKey, params, callback)
         } else {
             single.subscribeOn(scheduler)
                 .observeOn(scheduler)
                 .autoDisposable(scopeProvider)
                 .subscribe({
-                    val nextPageKey = nextKey(firstPageKey)
+                    val nextPageKey = nextKey(params.key)
                     onSuccessResultAfter(it, nextPageKey, params, callback)
                 }, {
                     onFailedResultAfter(it, params, callback)
@@ -59,14 +59,14 @@ abstract class RxPageKeyedDataSource<K, V>(
         val single = onLoad(params.key, params.requestedLoadSize)
         if (scheduler == null) {
             val result = single.blockingGet()
-            val previousPageKey = prevKey(firstPageKey)
+            val previousPageKey = prevKey(params.key)
             onSuccessResultBefore(result, previousPageKey, params, callback)
         } else {
             single.subscribeOn(scheduler)
                 .observeOn(scheduler)
                 .autoDisposable(scopeProvider)
                 .subscribe({
-                    val previousPageKey = prevKey(firstPageKey)
+                    val previousPageKey = prevKey(params.key)
                     onSuccessResultBefore(it, previousPageKey, params, callback)
                 }, {
                     onFailedResultBefore(it, params, callback)

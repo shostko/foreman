@@ -20,7 +20,7 @@ abstract class AsyncPageKeyedDataSource<K, V>(
 
     override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<K, V>) {
         onLoad(params.key, params.requestedLoadSize, CallbackImpl({
-            val nextPageKey = nextKey(firstPageKey)
+            val nextPageKey = nextKey(params.key)
             onSuccessResultAfter(it, nextPageKey, params, callback)
         }, {
             onFailedResultAfter(it, params, callback)
@@ -29,7 +29,7 @@ abstract class AsyncPageKeyedDataSource<K, V>(
 
     override fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<K, V>) {
         onLoad(params.key, params.requestedLoadSize, CallbackImpl({
-            val previousPageKey = prevKey(firstPageKey)
+            val previousPageKey = prevKey(params.key)
             onSuccessResultBefore(it, previousPageKey, params, callback)
         }, {
             onFailedResultBefore(it, params, callback)
