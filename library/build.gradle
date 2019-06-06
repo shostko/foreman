@@ -29,7 +29,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-    compileOnly 'androidx.annotation:annotation:1.0.2'
+    compileOnly 'androidx.annotation:annotation:1.1.0'
     compileOnly 'io.reactivex.rxjava2:rxjava:2.2.8'
     compileOnly "androidx.lifecycle:lifecycle-viewmodel-ktx:2.0.0"
     kapt "androidx.lifecycle:lifecycle-compiler:2.0.0"
