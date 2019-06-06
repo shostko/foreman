@@ -116,9 +116,7 @@ abstract class BaseStatusProcessor<STATUS : BaseLoadingStatus<*>>(private val li
             upstream, BiFunction { _, t -> t })
     }
 
-    fun <T> wrapSingleRequest(callable: () -> Single<List<T>>): Flowable<List<T>> = wrapSingleRequest(emptyList(), callable)
-
-    fun <T> wrapSingleRequest(errorItem: T, callable: () -> Single<T>): Flowable<T> =
+    fun <T> wrapSingleRequest(errorItem: T? = null, callable: () -> Single<T>): Flowable<T> =
         action.startWith(Action.REFRESH)
             .doOnNext { updateLoading() }
             .switchMapSingle { _ ->
@@ -126,10 +124,8 @@ abstract class BaseStatusProcessor<STATUS : BaseLoadingStatus<*>>(private val li
                     .subscribeOn(Schedulers.io())
                     .doOnSuccess { updateSuccess() }
                     .doOnError { updateError(it) }
-                    .onErrorReturnItem(errorItem)
+                    .onErrorResumeNext { if (errorItem == null) Single.never() else Single.just(errorItem) }
             }
 
-    fun <T> wrapOneRequest(callable: () -> List<T>): Flowable<List<T>> = wrapOneRequest(emptyList(), callable)
-
-    fun <T> wrapOneRequest(errorItem: T, callable: () -> T): Flowable<T> = wrapSingleRequest(errorItem, { Single.just(callable.invoke()) })
+    fun <T> wrapOneRequest(errorItem: T? = null, callable: () -> T): Flowable<T> = wrapSingleRequest(errorItem, { Single.just(callable.invoke()) })
 }
