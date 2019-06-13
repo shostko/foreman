@@ -1,11 +1,11 @@
 package by.shostko.statushandler.paging.positional
 
-import by.shostko.statushandler.StatusProcessor
+import by.shostko.statushandler.StatusHandler
 
 @Suppress("unused")
 abstract class SimplePositionalDataSource<V>(
-    statusProcessor: StatusProcessor<*>
-) : BasePositionalDataSource<V>(statusProcessor) {
+    statusHandler: StatusHandler<*>
+) : BasePositionalDataSource<V>(statusHandler) {
 
     override fun onLoadInitial(params: LoadInitialParams, callback: LoadInitialCallback<V>) {
         val list = onLoad(params.requestedStartPosition, params.requestedLoadSize)

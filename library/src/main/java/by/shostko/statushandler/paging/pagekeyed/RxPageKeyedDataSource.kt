@@ -1,6 +1,6 @@
 package by.shostko.statushandler.paging.pagekeyed
 
-import by.shostko.statushandler.StatusProcessor
+import by.shostko.statushandler.StatusHandler
 import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
 import com.uber.autodispose.autoDisposable
 import io.reactivex.Scheduler
@@ -8,10 +8,10 @@ import io.reactivex.Single
 
 @Suppress("MemberVisibilityCanBePrivate", "unused", "CheckResult")
 abstract class RxPageKeyedDataSource<K, V>(
-    statusProcessor: StatusProcessor<*>,
+    statusHandler: StatusHandler<*>,
     protected val firstPageKey: K,
     private val scheduler: Scheduler? = null
-) : BasePageKeyedDataSource<K, V>(statusProcessor) {
+) : BasePageKeyedDataSource<K, V>(statusHandler) {
 
     private val scopeProvider by lazy { AndroidLifecycleScopeProvider.from(this) }
 

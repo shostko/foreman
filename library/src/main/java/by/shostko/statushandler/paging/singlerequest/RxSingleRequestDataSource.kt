@@ -1,6 +1,6 @@
 package by.shostko.statushandler.paging.singlerequest
 
-import by.shostko.statushandler.StatusProcessor
+import by.shostko.statushandler.StatusHandler
 import by.shostko.statushandler.paging.pagekeyed.BasePageKeyedDataSource
 import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
 import com.uber.autodispose.autoDisposable
@@ -9,9 +9,9 @@ import io.reactivex.Single
 
 @Suppress("unused")
 abstract class RxSingleRequestDataSource<V>(
-    statusProcessor: StatusProcessor<*>,
+    statusHandler: StatusHandler<*>,
     private val scheduler: Scheduler? = null
-) : BasePageKeyedDataSource<Int, V>(statusProcessor) {
+) : BasePageKeyedDataSource<Int, V>(statusHandler) {
 
     private val scopeProvider by lazy { AndroidLifecycleScopeProvider.from(this) }
 

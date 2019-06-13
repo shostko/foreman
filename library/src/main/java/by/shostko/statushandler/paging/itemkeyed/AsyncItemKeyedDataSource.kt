@@ -1,11 +1,11 @@
 package by.shostko.statushandler.paging.itemkeyed
 
-import by.shostko.statushandler.StatusProcessor
+import by.shostko.statushandler.StatusHandler
 
 @Suppress("unused")
 abstract class AsyncItemKeyedDataSource<K, V>(
-    statusProcessor: StatusProcessor<*>
-) : BaseItemKeyedDataSource<K, V>(statusProcessor) {
+    statusHandler: StatusHandler<*>
+) : BaseItemKeyedDataSource<K, V>(statusHandler) {
 
     final override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<V>) {
         onLoadInitial(params.requestedInitialKey, params.requestedLoadSize, CallbackImpl({

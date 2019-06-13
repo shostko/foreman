@@ -16,7 +16,7 @@ enum class Action {
     RETRY
 }
 
-class StatusProcessor<E>(private val lifecycleOwner: LifecycleOwner, private val factory: Status.Factory<E>) {
+class StatusHandler<E>(private val lifecycleOwner: LifecycleOwner, private val factory: Status.Factory<E>) {
 
     private val statusProcessor: FlowableProcessor<Status<E>> = BehaviorProcessor.createDefault(factory.createWorking(Direction.FULL))
 

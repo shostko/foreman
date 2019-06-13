@@ -1,12 +1,12 @@
 package by.shostko.statushandler.paging.pagekeyed
 
-import by.shostko.statushandler.StatusProcessor
+import by.shostko.statushandler.StatusHandler
 
 @Suppress("MemberVisibilityCanBePrivate", "unused", "CheckResult")
 abstract class SimplePageKeyedDataSource<K, V>(
-    statusProcessor: StatusProcessor<*>,
+    statusHandler: StatusHandler<*>,
     protected val firstPageKey: K
-) : BasePageKeyedDataSource<K, V>(statusProcessor) {
+) : BasePageKeyedDataSource<K, V>(statusHandler) {
 
     override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<K, V>) {
         val list = onLoad(firstPageKey, params.requestedLoadSize)

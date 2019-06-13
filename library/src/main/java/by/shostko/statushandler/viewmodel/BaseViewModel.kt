@@ -15,7 +15,7 @@ abstract class CustomViewModel<E>(noError: E, factory: Status.Factory<E>) : Life
 
     private val noErrorPair: Pair<Throwable, E> = Pair(Throwable(), noError)
 
-    protected val statusProcessor by lazy { StatusProcessor(this, factory) }
+    protected val statusHandler by lazy { StatusHandler(this, factory) }
 
     protected val itemsEmptyFlowableProcessor = BehaviorProcessor.createDefault(true)
 
@@ -24,7 +24,7 @@ abstract class CustomViewModel<E>(noError: E, factory: Status.Factory<E>) : Life
     private var itemsDataObserver: BaseItemsObserver? = null
 
     val progress: Flowable<Direction> = Flowable.combineLatest(
-        statusProcessor.status
+        statusHandler.status
             .distinctUntilChanged()
             .map { it.direction },
         itemsEmptyFlowableProcessor
@@ -40,25 +40,25 @@ abstract class CustomViewModel<E>(noError: E, factory: Status.Factory<E>) : Life
         .distinctUntilChanged()
 
     val throwable: Flowable<Throwable> = Flowable.merge(
-        statusProcessor.status.map { it.throwable ?: noErrorPair.first },
+        statusHandler.status.map { it.throwable ?: noErrorPair.first },
         errorFlowableProcessor.map { it.first }
     ).distinctUntilChanged()
 
     val error: Flowable<E> = Flowable.merge(
-        statusProcessor.status.map { it.error ?: noErrorPair.second },
+        statusHandler.status.map { it.error ?: noErrorPair.second },
         errorFlowableProcessor.map { it.second }
     ).distinctUntilChanged()
 
     @CallSuper
     open fun retry() {
         errorFlowableProcessor.onNext(noErrorPair)
-        statusProcessor.retry()
+        statusHandler.retry()
     }
 
     @CallSuper
     open fun refresh() {
         errorFlowableProcessor.onNext(noErrorPair)
-        statusProcessor.refresh()
+        statusHandler.refresh()
     }
 
     protected fun postCollectionSize(collection: Collection<*>) {

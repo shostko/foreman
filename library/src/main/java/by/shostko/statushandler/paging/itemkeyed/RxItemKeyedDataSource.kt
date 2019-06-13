@@ -1,6 +1,6 @@
 package by.shostko.statushandler.paging.itemkeyed
 
-import by.shostko.statushandler.StatusProcessor
+import by.shostko.statushandler.StatusHandler
 import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
 import com.uber.autodispose.autoDisposable
 import io.reactivex.Scheduler
@@ -8,9 +8,9 @@ import io.reactivex.Single
 
 @Suppress("unused")
 abstract class RxItemKeyedDataSource<K, V>(
-    statusProcessor: StatusProcessor<*>,
+    statusHandler: StatusHandler<*>,
     private val scheduler: Scheduler? = null
-) : BaseItemKeyedDataSource<K, V>(statusProcessor) {
+) : BaseItemKeyedDataSource<K, V>(statusHandler) {
 
     private val scopeProvider by lazy { AndroidLifecycleScopeProvider.from(this) }
 

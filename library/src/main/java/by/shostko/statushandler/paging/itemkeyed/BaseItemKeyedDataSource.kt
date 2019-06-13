@@ -5,7 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import by.shostko.statushandler.Action
 import by.shostko.statushandler.Direction
-import by.shostko.statushandler.StatusProcessor
+import by.shostko.statushandler.StatusHandler
 import by.shostko.statushandler.extension.asString
 import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
 import com.uber.autodispose.autoDisposable
@@ -15,7 +15,7 @@ import timber.log.Timber
 @Suppress("MemberVisibilityCanBePrivate", "unused")
 @SuppressLint("CheckResult")
 abstract class BaseItemKeyedDataSource<K, V>(
-    protected val statusProcessor: StatusProcessor<*>
+    protected val statusHandler: StatusHandler<*>
 ) : ItemKeyedLifecycledDataSource<K, V>() {
 
     protected open val tag: String = javaClass.simpleName
@@ -26,7 +26,7 @@ abstract class BaseItemKeyedDataSource<K, V>(
 
     init {
         Handler(Looper.getMainLooper()).post {
-            statusProcessor.action
+            statusHandler.action
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
                 .autoDisposable(scopeProvider)
@@ -42,7 +42,7 @@ abstract class BaseItemKeyedDataSource<K, V>(
 
     final override fun loadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<V>) {
         Timber.tag(tag).d("loadInitial for %s", params.asString())
-        statusProcessor.updateWorking(Direction.FULL)
+        statusHandler.updateWorking(Direction.FULL)
         try {
             onLoadInitial(params, callback)
         } catch (e: Throwable) {
@@ -55,7 +55,7 @@ abstract class BaseItemKeyedDataSource<K, V>(
 
     final override fun loadAfter(params: LoadParams<K>, callback: LoadCallback<V>) {
         Timber.tag(tag).d("loadAfter for %s", params.asString())
-        statusProcessor.updateWorking(Direction.FORWARD)
+        statusHandler.updateWorking(Direction.FORWARD)
         try {
             onLoadAfter(params, callback)
         } catch (e: Throwable) {
@@ -68,7 +68,7 @@ abstract class BaseItemKeyedDataSource<K, V>(
 
     final override fun loadBefore(params: LoadParams<K>, callback: LoadCallback<V>) {
         Timber.tag(tag).d("loadBefore for %s", params.asString())
-        statusProcessor.updateWorking(Direction.BACKWARD)
+        statusHandler.updateWorking(Direction.BACKWARD)
         try {
             onLoadBefore(params, callback)
         } catch (e: Throwable) {
@@ -86,7 +86,7 @@ abstract class BaseItemKeyedDataSource<K, V>(
     ) {
         Timber.tag(tag).d("onSuccessResult %d items for %s", list.size, params.asString())
         retryFunction = null
-        statusProcessor.updateSuccess()
+        statusHandler.updateSuccess()
         callback.onResult(list)
     }
 
@@ -97,7 +97,7 @@ abstract class BaseItemKeyedDataSource<K, V>(
     ) {
         Timber.tag(tag).d("onSuccessResult %d items for %s", list.size, params.asString())
         retryFunction = null
-        statusProcessor.updateSuccess()
+        statusHandler.updateSuccess()
         callback.onResult(list)
     }
 
@@ -108,7 +108,7 @@ abstract class BaseItemKeyedDataSource<K, V>(
     ) {
         Timber.tag(tag).e(e, "Error during loadInitial for %s", params.asString())
         retryFunction = { loadInitial(params, callback) }
-        statusProcessor.updateFailed(e)
+        statusHandler.updateFailed(e)
     }
 
     protected fun onFailedResultBefore(
@@ -117,7 +117,7 @@ abstract class BaseItemKeyedDataSource<K, V>(
         callback: LoadCallback<V>
     ) {
         Timber.tag(tag).e(e, "Error during loadBefore for %s", params.asString())
-        statusProcessor.updateFailed(e)
+        statusHandler.updateFailed(e)
         retryFunction = { loadBefore(params, callback) }
     }
 
@@ -128,6 +128,6 @@ abstract class BaseItemKeyedDataSource<K, V>(
     ) {
         Timber.tag(tag).e(e, "Error during loadAfter for %s", params.asString())
         retryFunction = { loadAfter(params, callback) }
-        statusProcessor.updateFailed(e)
+        statusHandler.updateFailed(e)
     }
 }
