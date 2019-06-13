@@ -1,10 +1,9 @@
 package by.shostko.statushandler.paging.positional
 
 import by.shostko.statushandler.StatusHandler
-import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
-import com.uber.autodispose.autoDisposable
 import io.reactivex.Scheduler
 import io.reactivex.Single
+import io.reactivex.disposables.CompositeDisposable
 
 @Suppress("unused")
 abstract class RxPositionalDataSource<V>(
@@ -12,21 +11,26 @@ abstract class RxPositionalDataSource<V>(
     private val scheduler: Scheduler? = null
 ) : BasePositionalDataSource<V>(statusHandler) {
 
-    private val scopeProvider by lazy { AndroidLifecycleScopeProvider.from(this) }
+    private val disposable = CompositeDisposable()
+
+    init {
+        addInvalidatedCallback { disposable.dispose() }
+    }
 
     override fun onLoadInitial(params: LoadInitialParams, callback: LoadInitialCallback<V>) {
         val single = onLoad(params.requestedStartPosition, params.requestedLoadSize)
         if (scheduler == null) {
             onSuccessResult(single.blockingGet(), params, callback)
         } else {
-            single.subscribeOn(scheduler)
-                .observeOn(scheduler)
-                .autoDisposable(scopeProvider)
-                .subscribe({
-                    onSuccessResult(it, params, callback)
-                }, {
-                    onFailedResult(it, params, callback)
-                })
+            disposable.add(
+                single.subscribeOn(scheduler)
+                    .observeOn(scheduler)
+                    .subscribe({
+                        onSuccessResult(it, params, callback)
+                    }, {
+                        onFailedResult(it, params, callback)
+                    })
+            )
         }
     }
 
@@ -35,14 +39,15 @@ abstract class RxPositionalDataSource<V>(
         if (scheduler == null) {
             onSuccessResult(single.blockingGet(), params, callback)
         } else {
-            single.subscribeOn(scheduler)
-                .observeOn(scheduler)
-                .autoDisposable(scopeProvider)
-                .subscribe({
-                    onSuccessResult(it, params, callback)
-                }, {
-                    onFailedResult(it, params, callback)
-                })
+            disposable.add(
+                single.subscribeOn(scheduler)
+                    .observeOn(scheduler)
+                    .subscribe({
+                        onSuccessResult(it, params, callback)
+                    }, {
+                        onFailedResult(it, params, callback)
+                    })
+            )
         }
     }
 

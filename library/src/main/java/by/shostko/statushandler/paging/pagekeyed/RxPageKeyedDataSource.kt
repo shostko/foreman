@@ -1,19 +1,22 @@
 package by.shostko.statushandler.paging.pagekeyed
 
 import by.shostko.statushandler.StatusHandler
-import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
-import com.uber.autodispose.autoDisposable
 import io.reactivex.Scheduler
 import io.reactivex.Single
+import io.reactivex.disposables.CompositeDisposable
 
-@Suppress("MemberVisibilityCanBePrivate", "unused", "CheckResult")
+@Suppress("unused", "MemberVisibilityCanBePrivate")
 abstract class RxPageKeyedDataSource<K, V>(
     statusHandler: StatusHandler<*>,
     protected val firstPageKey: K,
     private val scheduler: Scheduler? = null
 ) : BasePageKeyedDataSource<K, V>(statusHandler) {
 
-    private val scopeProvider by lazy { AndroidLifecycleScopeProvider.from(this) }
+    private val disposable = CompositeDisposable()
+
+    init {
+        addInvalidatedCallback { disposable.dispose() }
+    }
 
     override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<K, V>) {
         val single = onLoad(firstPageKey, params.requestedLoadSize)
@@ -23,16 +26,17 @@ abstract class RxPageKeyedDataSource<K, V>(
             val nextPageKey = nextKey(firstPageKey)
             onSuccessResultInitial(result, previousPageKey, nextPageKey, params, callback)
         } else {
-            single.subscribeOn(scheduler)
-                .observeOn(scheduler)
-                .autoDisposable(scopeProvider)
-                .subscribe({
-                    val previousPageKey = prevKey(firstPageKey)
-                    val nextPageKey = nextKey(firstPageKey)
-                    onSuccessResultInitial(it, previousPageKey, nextPageKey, params, callback)
-                }, {
-                    onFailedResultInitial(it, params, callback)
-                })
+            disposable.add(
+                single.subscribeOn(scheduler)
+                    .observeOn(scheduler)
+                    .subscribe({
+                        val previousPageKey = prevKey(firstPageKey)
+                        val nextPageKey = nextKey(firstPageKey)
+                        onSuccessResultInitial(it, previousPageKey, nextPageKey, params, callback)
+                    }, {
+                        onFailedResultInitial(it, params, callback)
+                    })
+            )
         }
     }
 
@@ -43,15 +47,16 @@ abstract class RxPageKeyedDataSource<K, V>(
             val nextPageKey = nextKey(params.key)
             onSuccessResultAfter(result, nextPageKey, params, callback)
         } else {
-            single.subscribeOn(scheduler)
-                .observeOn(scheduler)
-                .autoDisposable(scopeProvider)
-                .subscribe({
-                    val nextPageKey = nextKey(params.key)
-                    onSuccessResultAfter(it, nextPageKey, params, callback)
-                }, {
-                    onFailedResultAfter(it, params, callback)
-                })
+            disposable.add(
+                single.subscribeOn(scheduler)
+                    .observeOn(scheduler)
+                    .subscribe({
+                        val nextPageKey = nextKey(params.key)
+                        onSuccessResultAfter(it, nextPageKey, params, callback)
+                    }, {
+                        onFailedResultAfter(it, params, callback)
+                    })
+            )
         }
     }
 
@@ -62,15 +67,16 @@ abstract class RxPageKeyedDataSource<K, V>(
             val previousPageKey = prevKey(params.key)
             onSuccessResultBefore(result, previousPageKey, params, callback)
         } else {
-            single.subscribeOn(scheduler)
-                .observeOn(scheduler)
-                .autoDisposable(scopeProvider)
-                .subscribe({
-                    val previousPageKey = prevKey(params.key)
-                    onSuccessResultBefore(it, previousPageKey, params, callback)
-                }, {
-                    onFailedResultBefore(it, params, callback)
-                })
+            disposable.add(
+                single.subscribeOn(scheduler)
+                    .observeOn(scheduler)
+                    .subscribe({
+                        val previousPageKey = prevKey(params.key)
+                        onSuccessResultBefore(it, previousPageKey, params, callback)
+                    }, {
+                        onFailedResultBefore(it, params, callback)
+                    })
+            )
         }
     }
 

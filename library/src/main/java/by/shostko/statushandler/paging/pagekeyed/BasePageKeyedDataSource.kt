@@ -1,43 +1,33 @@
 package by.shostko.statushandler.paging.pagekeyed
 
-import android.annotation.SuppressLint
-import android.os.Handler
-import android.os.Looper
+import androidx.paging.PageKeyedDataSource
 import by.shostko.statushandler.Action
-import by.shostko.statushandler.StatusHandler
 import by.shostko.statushandler.Direction
+import by.shostko.statushandler.StatusHandler
 import by.shostko.statushandler.extension.asString
-import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
-import com.uber.autodispose.autoDisposable
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 
-@Suppress("MemberVisibilityCanBePrivate", "unused")
-@SuppressLint("CheckResult")
 abstract class BasePageKeyedDataSource<K, V>(
     protected val statusHandler: StatusHandler<*>
-) : PageKeyedLifecycledDataSource<K, V>() {
+) : PageKeyedDataSource<K, V>() {
 
     protected open val tag: String = javaClass.simpleName
-
-    private val scopeProvider by lazy { AndroidLifecycleScopeProvider.from(this) }
 
     private var retryFunction: (() -> Any)? = null
 
     init {
-        Handler(Looper.getMainLooper()).post {
-            statusHandler.action
-                .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.io())
-                .autoDisposable(scopeProvider)
-                .subscribe({
-                    Timber.tag(tag).d("%s action requested", it)
-                    when (it) {
-                        Action.RETRY -> retryFunction?.apply { retryFunction = null }?.invoke()
-                        else -> invalidate()
-                    }
-                }, { Timber.tag(tag).e(it, "Error during listening actions") })
-        }
+        val disposable = statusHandler.action
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.io())
+            .subscribe({
+                Timber.tag(tag).d("%s action requested", it)
+                when (it) {
+                    Action.RETRY -> retryFunction?.apply { retryFunction = null }?.invoke()
+                    else -> invalidate()
+                }
+            }, { Timber.tag(tag).e(it, "Error during listening actions") })
+        addInvalidatedCallback { disposable.dispose() }
     }
 
     final override fun loadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<K, V>) {
@@ -83,13 +73,15 @@ abstract class BasePageKeyedDataSource<K, V>(
         params: LoadInitialParams<K>,
         callback: LoadInitialCallback<K, V>
     ) {
-        Timber.tag(tag).d(
-            "onSuccessResult %d items (previousPageKey=%s, nextPageKey=%s) for %s",
-            list.size, previousPageKey, nextPageKey, params.asString()
-        )
-        retryFunction = null
-        statusHandler.updateSuccess()
-        callback.onResult(list, previousPageKey, nextPageKey)
+        if (!isInvalid) {
+            Timber.tag(tag).d(
+                "onSuccessResult %d items (previousPageKey=%s, nextPageKey=%s) for %s",
+                list.size, previousPageKey, nextPageKey, params.asString()
+            )
+            retryFunction = null
+            statusHandler.updateSuccess()
+            callback.onResult(list, previousPageKey, nextPageKey)
+        }
     }
 
     protected fun onSuccessResultAfter(
@@ -98,13 +90,15 @@ abstract class BasePageKeyedDataSource<K, V>(
         params: LoadParams<K>,
         callback: LoadCallback<K, V>
     ) {
-        Timber.tag(tag).d(
-            "onSuccessResult %d items (nextPageKey=%s) for %s",
-            list.size, nextPageKey, params.asString()
-        )
-        retryFunction = null
-        statusHandler.updateSuccess()
-        callback.onResult(list, nextPageKey)
+        if (!isInvalid) {
+            Timber.tag(tag).d(
+                "onSuccessResult %d items (nextPageKey=%s) for %s",
+                list.size, nextPageKey, params.asString()
+            )
+            retryFunction = null
+            statusHandler.updateSuccess()
+            callback.onResult(list, nextPageKey)
+        }
     }
 
     protected fun onSuccessResultBefore(
@@ -113,13 +107,15 @@ abstract class BasePageKeyedDataSource<K, V>(
         params: LoadParams<K>,
         callback: LoadCallback<K, V>
     ) {
-        Timber.tag(tag).d(
-            "onSuccessResult %d items (previousPageKey=%s) for %s",
-            list.size, previousPageKey, params.asString()
-        )
-        retryFunction = null
-        statusHandler.updateSuccess()
-        callback.onResult(list, previousPageKey)
+        if (!isInvalid) {
+            Timber.tag(tag).d(
+                "onSuccessResult %d items (previousPageKey=%s) for %s",
+                list.size, previousPageKey, params.asString()
+            )
+            retryFunction = null
+            statusHandler.updateSuccess()
+            callback.onResult(list, previousPageKey)
+        }
     }
 
     protected fun onFailedResultInitial(
@@ -127,9 +123,11 @@ abstract class BasePageKeyedDataSource<K, V>(
         params: LoadInitialParams<K>,
         callback: LoadInitialCallback<K, V>
     ) {
-        Timber.tag(tag).e(e, "Error during loadInitial for %s", params.asString())
-        retryFunction = { loadInitial(params, callback) }
-        statusHandler.updateFailed(e)
+        if (!isInvalid) {
+            Timber.tag(tag).e(e, "Error during loadInitial for %s", params.asString())
+            retryFunction = { loadInitial(params, callback) }
+            statusHandler.updateFailed(e)
+        }
     }
 
     protected fun onFailedResultAfter(
@@ -137,9 +135,11 @@ abstract class BasePageKeyedDataSource<K, V>(
         params: LoadParams<K>,
         callback: LoadCallback<K, V>
     ) {
-        Timber.tag(tag).e(e, "Error during loadAfter for %s", params.asString())
-        retryFunction = { loadAfter(params, callback) }
-        statusHandler.updateFailed(e)
+        if (!isInvalid) {
+            Timber.tag(tag).e(e, "Error during loadAfter for %s", params.asString())
+            retryFunction = { loadAfter(params, callback) }
+            statusHandler.updateFailed(e)
+        }
     }
 
     protected fun onFailedResultBefore(
@@ -147,8 +147,10 @@ abstract class BasePageKeyedDataSource<K, V>(
         params: LoadParams<K>,
         callback: LoadCallback<K, V>
     ) {
-        Timber.tag(tag).e(e, "Error during loadBefore for %s", params.asString())
-        retryFunction = { loadBefore(params, callback) }
-        statusHandler.updateFailed(e)
+        if (!isInvalid) {
+            Timber.tag(tag).e(e, "Error during loadBefore for %s", params.asString())
+            retryFunction = { loadBefore(params, callback) }
+            statusHandler.updateFailed(e)
+        }
     }
 }

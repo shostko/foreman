@@ -2,10 +2,9 @@ package by.shostko.statushandler.paging.singlerequest
 
 import by.shostko.statushandler.StatusHandler
 import by.shostko.statushandler.paging.pagekeyed.BasePageKeyedDataSource
-import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
-import com.uber.autodispose.autoDisposable
 import io.reactivex.Scheduler
 import io.reactivex.Single
+import io.reactivex.disposables.CompositeDisposable
 
 @Suppress("unused")
 abstract class RxSingleRequestDataSource<V>(
@@ -13,21 +12,26 @@ abstract class RxSingleRequestDataSource<V>(
     private val scheduler: Scheduler? = null
 ) : BasePageKeyedDataSource<Int, V>(statusHandler) {
 
-    private val scopeProvider by lazy { AndroidLifecycleScopeProvider.from(this) }
+    private val disposable = CompositeDisposable()
+
+    init {
+        addInvalidatedCallback { disposable.dispose() }
+    }
 
     override fun onLoadInitial(params: LoadInitialParams<Int>, callback: LoadInitialCallback<Int, V>) {
         val single = onLoad()
         if (scheduler == null) {
             onSuccessResultInitial(single.blockingGet(), null, null, params, callback)
         } else {
-            single.subscribeOn(scheduler)
-                .observeOn(scheduler)
-                .autoDisposable(scopeProvider)
-                .subscribe({
-                    onSuccessResultInitial(it, null, null, params, callback)
-                }, {
-                    onFailedResultInitial(it, params, callback)
-                })
+            disposable.add(
+                single.subscribeOn(scheduler)
+                    .observeOn(scheduler)
+                    .subscribe({
+                        onSuccessResultInitial(it, null, null, params, callback)
+                    }, {
+                        onFailedResultInitial(it, params, callback)
+                    })
+            )
         }
     }
 

@@ -1,10 +1,9 @@
 package by.shostko.statushandler.paging.itemkeyed
 
 import by.shostko.statushandler.StatusHandler
-import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
-import com.uber.autodispose.autoDisposable
 import io.reactivex.Scheduler
 import io.reactivex.Single
+import io.reactivex.disposables.CompositeDisposable
 
 @Suppress("unused")
 abstract class RxItemKeyedDataSource<K, V>(
@@ -12,21 +11,26 @@ abstract class RxItemKeyedDataSource<K, V>(
     private val scheduler: Scheduler? = null
 ) : BaseItemKeyedDataSource<K, V>(statusHandler) {
 
-    private val scopeProvider by lazy { AndroidLifecycleScopeProvider.from(this) }
+    private val disposable = CompositeDisposable()
+
+    init {
+        addInvalidatedCallback { disposable.dispose() }
+    }
 
     final override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<V>) {
         val single = onLoadInitial(params.requestedInitialKey, params.requestedLoadSize)
         if (scheduler == null) {
             onSuccessResult(single.blockingGet(), params, callback)
         } else {
-            single.subscribeOn(scheduler)
-                .observeOn(scheduler)
-                .autoDisposable(scopeProvider)
-                .subscribe({
-                    onSuccessResult(it, params, callback)
-                }, {
-                    onFailedResultInitial(it, params, callback)
-                })
+            disposable.add(
+                single.subscribeOn(scheduler)
+                    .observeOn(scheduler)
+                    .subscribe({
+                        onSuccessResult(it, params, callback)
+                    }, {
+                        onFailedResultInitial(it, params, callback)
+                    })
+            )
         }
     }
 
@@ -35,14 +39,15 @@ abstract class RxItemKeyedDataSource<K, V>(
         if (scheduler == null) {
             onSuccessResult(single.blockingGet(), params, callback)
         } else {
-            single.subscribeOn(scheduler)
-                .observeOn(scheduler)
-                .autoDisposable(scopeProvider)
-                .subscribe({
-                    onSuccessResult(it, params, callback)
-                }, {
-                    onFailedResultAfter(it, params, callback)
-                })
+            disposable.add(
+                single.subscribeOn(scheduler)
+                    .observeOn(scheduler)
+                    .subscribe({
+                        onSuccessResult(it, params, callback)
+                    }, {
+                        onFailedResultAfter(it, params, callback)
+                    })
+            )
         }
     }
 
@@ -51,14 +56,15 @@ abstract class RxItemKeyedDataSource<K, V>(
         if (scheduler == null) {
             onSuccessResult(single.blockingGet(), params, callback)
         } else {
-            single.subscribeOn(scheduler)
-                .observeOn(scheduler)
-                .autoDisposable(scopeProvider)
-                .subscribe({
-                    onSuccessResult(it, params, callback)
-                }, {
-                    onFailedResultBefore(it, params, callback)
-                })
+            disposable.add(
+                single.subscribeOn(scheduler)
+                    .observeOn(scheduler)
+                    .subscribe({
+                        onSuccessResult(it, params, callback)
+                    }, {
+                        onFailedResultBefore(it, params, callback)
+                    })
+            )
         }
     }
 
