@@ -5,7 +5,7 @@ apply plugin: 'kotlin-android-extensions'
 android {
     compileSdkVersion 29
     defaultConfig {
-        applicationId "by.shostko.statusprocessor.sample"
+        applicationId "by.shostko.statushandler.sample"
         minSdkVersion 14
         targetSdkVersion 29
         versionCode 1
