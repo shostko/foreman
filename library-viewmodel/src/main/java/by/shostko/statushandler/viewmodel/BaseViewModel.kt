@@ -111,7 +111,8 @@ abstract class CustomViewModel<E>(noError: E, factory: Status.Factory<E>) : Life
         }
     }
 
-    private inner class RecyclerItemsObserver(internal val adapter: RecyclerView.Adapter<*>) : BaseItemsObserver(adapter) {
+    private inner class RecyclerItemsObserver(internal val adapter: RecyclerView.Adapter<*>) :
+        BaseItemsObserver(adapter) {
         override fun onChanged() {
             postCollectionSize(adapter.itemCount)
         }
