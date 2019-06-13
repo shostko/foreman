@@ -1,1 +1,3 @@
-# status-processor
+# StatusHandler
+
+Helper to handle statuses

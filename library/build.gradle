@@ -8,10 +8,10 @@ publish {
     userOrg = 'shostko'
     repoName = 'android'
     groupId = 'by.shostko'
-    artifactId = 'status-processor-ktx'
+    artifactId = 'status-handler'
     publishVersion = '0.1.15'
-    desc = 'Status handling helpers'
-    website = 'https://github.com/shostko/market-southern'
+    desc = 'Helper to handle statuses'
+    website = 'https://github.com/shostko/status-handler'
 }
 
 android {
