@@ -3,6 +3,7 @@
 package by.shostko.statusprocessor
 
 import androidx.lifecycle.LifecycleOwner
+import io.reactivex.Completable
 import io.reactivex.Flowable
 import io.reactivex.Single
 import io.reactivex.processors.BehaviorProcessor
@@ -17,7 +18,6 @@ enum class Action {
 
 class StatusProcessor<E>(private val lifecycleOwner: LifecycleOwner, private val factory: Status.Factory<E>) {
 
-    @Suppress("LeakingThis")
     private val statusProcessor: FlowableProcessor<Status<E>> = BehaviorProcessor.createDefault(factory.createWorking(Direction.FULL))
 
     private val actionProcessor: FlowableProcessor<Action> = PublishProcessor.create()
@@ -51,5 +51,18 @@ class StatusProcessor<E>(private val lifecycleOwner: LifecycleOwner, private val
                     .onErrorResumeNext { if (errorItem == null) Single.never() else Single.just(errorItem) }
             }
 
-    fun <T> wrapOneRequest(errorItem: T? = null, callable: () -> T): Flowable<T> = wrapSingleRequest(errorItem, { Single.just(callable.invoke()) })
+    fun wrapCompletableRequest(callable: () -> Completable): Completable =
+        action.startWith(Action.REFRESH)
+            .doOnNext { updateWorking(Direction.FULL) }
+            .switchMapCompletable { _ ->
+                Completable.defer(callable)
+                    .subscribeOn(Schedulers.io())
+                    .doOnComplete { updateSuccess() }
+                    .doOnError { updateFailed(it) }
+                    .onErrorResumeNext { Completable.never() }
+            }
+
+    fun <T> wrapOneRequest(errorItem: T? = null, callable: () -> T): Flowable<T> = wrapSingleRequest(errorItem, { Single.fromCallable(callable) })
+
+    fun wrapOneRequest(action: () -> Unit): Completable = wrapCompletableRequest { Completable.fromAction(action) }
 }
