@@ -1,10 +1,10 @@
 package by.shostko.statusprocessor.paging.pagekeyed
 
-import by.shostko.statusprocessor.BaseStatusProcessor
+import by.shostko.statusprocessor.StatusProcessor
 
 @Suppress("MemberVisibilityCanBePrivate", "unused", "CheckResult")
 abstract class SimplePageKeyedDataSource<K, V>(
-    statusProcessor: BaseStatusProcessor<*>,
+    statusProcessor: StatusProcessor<*>,
     protected val firstPageKey: K
 ) : BasePageKeyedDataSource<K, V>(statusProcessor) {
 

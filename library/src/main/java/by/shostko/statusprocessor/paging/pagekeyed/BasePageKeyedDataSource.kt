@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
 import by.shostko.statusprocessor.Action
-import by.shostko.statusprocessor.BaseStatusProcessor
+import by.shostko.statusprocessor.StatusProcessor
 import by.shostko.statusprocessor.Direction
 import by.shostko.statusprocessor.extension.asString
 import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
@@ -15,7 +15,7 @@ import timber.log.Timber
 @Suppress("MemberVisibilityCanBePrivate", "unused")
 @SuppressLint("CheckResult")
 abstract class BasePageKeyedDataSource<K, V>(
-    protected val statusProcessor: BaseStatusProcessor<*>
+    protected val statusProcessor: StatusProcessor<*>
 ) : PageKeyedLifecycledDataSource<K, V>() {
 
     protected open val tag: String = javaClass.simpleName
@@ -42,7 +42,7 @@ abstract class BasePageKeyedDataSource<K, V>(
 
     final override fun loadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<K, V>) {
         Timber.tag(tag).d("loadInitial for %s", params.asString())
-        statusProcessor.updateLoading(Direction.FULL)
+        statusProcessor.updateWorking(Direction.FULL)
         try {
             onLoadInitial(params, callback)
         } catch (e: Throwable) {
@@ -54,7 +54,7 @@ abstract class BasePageKeyedDataSource<K, V>(
 
     final override fun loadAfter(params: LoadParams<K>, callback: LoadCallback<K, V>) {
         Timber.tag(tag).d("loadAfter for %s", params.asString())
-        statusProcessor.updateLoading(Direction.FORWARD)
+        statusProcessor.updateWorking(Direction.FORWARD)
         try {
             onLoadAfter(params, callback)
         } catch (e: Throwable) {
@@ -66,7 +66,7 @@ abstract class BasePageKeyedDataSource<K, V>(
 
     final override fun loadBefore(params: LoadParams<K>, callback: LoadCallback<K, V>) {
         Timber.tag(tag).d("loadBefore for %s", params.asString())
-        statusProcessor.updateLoading(Direction.BACKWARD)
+        statusProcessor.updateWorking(Direction.BACKWARD)
         try {
             onLoadBefore(params, callback)
         } catch (e: Throwable) {
@@ -129,7 +129,7 @@ abstract class BasePageKeyedDataSource<K, V>(
     ) {
         Timber.tag(tag).e(e, "Error during loadInitial for %s", params.asString())
         retryFunction = { loadInitial(params, callback) }
-        statusProcessor.updateError(e)
+        statusProcessor.updateFailed(e)
     }
 
     protected fun onFailedResultAfter(
@@ -139,7 +139,7 @@ abstract class BasePageKeyedDataSource<K, V>(
     ) {
         Timber.tag(tag).e(e, "Error during loadAfter for %s", params.asString())
         retryFunction = { loadAfter(params, callback) }
-        statusProcessor.updateError(e)
+        statusProcessor.updateFailed(e)
     }
 
     protected fun onFailedResultBefore(
@@ -149,6 +149,6 @@ abstract class BasePageKeyedDataSource<K, V>(
     ) {
         Timber.tag(tag).e(e, "Error during loadBefore for %s", params.asString())
         retryFunction = { loadBefore(params, callback) }
-        statusProcessor.updateError(e)
+        statusProcessor.updateFailed(e)
     }
 }

@@ -1,15 +1,14 @@
 package by.shostko.statusprocessor.paging.positional
 
-import by.shostko.statusprocessor.BaseStatusProcessor
+import by.shostko.statusprocessor.StatusProcessor
 import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
 import com.uber.autodispose.autoDisposable
 import io.reactivex.Scheduler
 import io.reactivex.Single
-import io.reactivex.schedulers.Schedulers
 
 @Suppress("unused")
 abstract class RxPositionalDataSource<V>(
-    statusProcessor: BaseStatusProcessor<*>,
+    statusProcessor: StatusProcessor<*>,
     private val scheduler: Scheduler? = null
 ) : BasePositionalDataSource<V>(statusProcessor) {
 

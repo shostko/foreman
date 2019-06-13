@@ -1,3 +1,5 @@
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+
 package by.shostko.statusprocessor
 
 import androidx.lifecycle.LifecycleOwner
@@ -13,20 +15,10 @@ enum class Action {
     RETRY
 }
 
-class StatusProcessor(lifecycleOwner: LifecycleOwner) : BaseStatusProcessor<Status>(lifecycleOwner) {
-
-    override fun createStatusLoading(direction: Direction): Status = Status.loading(direction)
-
-    override fun createStatusError(throwable: Throwable): Status = Status.error(throwable)
-
-    override fun createStatusSuccess(): Status = Status.success()
-}
-
-@Suppress("MemberVisibilityCanBePrivate", "unused")
-abstract class BaseStatusProcessor<STATUS : BaseStatus<*>>(private val lifecycleOwner: LifecycleOwner) {
+class StatusProcessor<STATUS : Status<*>>(private val lifecycleOwner: LifecycleOwner, private val factory: Status.Factory<STATUS>) {
 
     @Suppress("LeakingThis")
-    private val statusProcessor: FlowableProcessor<STATUS> = BehaviorProcessor.createDefault(createStatusLoading(Direction.FULL))
+    private val statusProcessor: FlowableProcessor<STATUS> = BehaviorProcessor.createDefault(factory.createWorking(Direction.FULL))
 
     private val actionProcessor: FlowableProcessor<Action> = PublishProcessor.create()
 
@@ -46,26 +38,20 @@ abstract class BaseStatusProcessor<STATUS : BaseStatus<*>>(private val lifecycle
         statusProcessor.onNext(loadingStatus)
     }
 
-    fun updateLoading(direction: Direction) = update(createStatusLoading(direction))
+    fun updateWorking(direction: Direction) = update(factory.createWorking(direction))
 
-    fun updateError(throwable: Throwable) = update(createStatusError(throwable))
+    fun updateFailed(throwable: Throwable) = update(factory.createFailed(throwable))
 
-    fun updateSuccess() = update(createStatusSuccess())
-
-    protected abstract fun createStatusLoading(direction: Direction): STATUS
-
-    protected abstract fun createStatusError(throwable: Throwable): STATUS
-
-    protected abstract fun createStatusSuccess(): STATUS
+    fun updateSuccess() = update(factory.createSuccess())
 
     fun <T> wrapSingleRequest(errorItem: T? = null, callable: () -> Single<T>): Flowable<T> =
         action.startWith(Action.REFRESH)
-            .doOnNext { updateLoading(Direction.FULL) }
+            .doOnNext { updateWorking(Direction.FULL) }
             .switchMapSingle { _ ->
                 Single.defer(callable)
                     .subscribeOn(Schedulers.io())
                     .doOnSuccess { updateSuccess() }
-                    .doOnError { updateError(it) }
+                    .doOnError { updateFailed(it) }
                     .onErrorResumeNext { if (errorItem == null) Single.never() else Single.just(errorItem) }
             }
 

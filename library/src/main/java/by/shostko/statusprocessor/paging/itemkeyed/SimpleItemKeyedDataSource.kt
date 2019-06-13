@@ -1,10 +1,10 @@
 package by.shostko.statusprocessor.paging.itemkeyed
 
-import by.shostko.statusprocessor.BaseStatusProcessor
+import by.shostko.statusprocessor.StatusProcessor
 
 @Suppress("unused")
 abstract class SimpleItemKeyedDataSource<K, V>(
-    statusProcessor: BaseStatusProcessor<*>
+    statusProcessor: StatusProcessor<*>
 ) : BaseItemKeyedDataSource<K, V>(statusProcessor) {
 
     final override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<V>) {
