@@ -7,9 +7,9 @@ import androidx.work.Data
 import androidx.work.RxWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import by.shostko.statushandler.Const.KEY_ERROR_CLASS
-import by.shostko.statushandler.Const.KEY_ERROR_MESSAGE
-import by.shostko.statushandler.Const.KEY_ERROR_MESSAGE_LOCALIZED
+import by.shostko.statushandler.worker.Const.KEY_ERROR_CLASS
+import by.shostko.statushandler.worker.Const.KEY_ERROR_MESSAGE
+import by.shostko.statushandler.worker.Const.KEY_ERROR_MESSAGE_LOCALIZED
 import io.reactivex.Completable
 import io.reactivex.Single
 

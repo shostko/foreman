@@ -8,9 +8,9 @@ publish {
     userOrg = 'shostko'
     repoName = 'android'
     groupId = 'by.shostko'
-    artifactId = 'status-handler'
+    artifactId = 'status-handler-worker'
     publishVersion = '0.1.15'
-    desc = 'Helper to handle statuses'
+    desc = 'Helper to handle statuses. Work support'
     website = 'https://github.com/shostko/status-handler'
 }
 
@@ -29,8 +29,13 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
+    compileOnly project(':status-handler')
+
     compileOnly 'androidx.annotation:annotation:1.1.0'
     compileOnly 'io.reactivex.rxjava2:rxjava:2.2.8'
+
+    compileOnly "android.arch.work:work-runtime-ktx:1.0.1"
+    compileOnly "android.arch.work:work-rxjava2:1.0.1"
 
     implementation 'com.jakewharton.timber:timber:4.7.1'
 }
