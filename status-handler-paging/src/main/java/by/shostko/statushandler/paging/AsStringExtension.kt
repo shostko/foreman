@@ -1,4 +1,4 @@
-package by.shostko.statushandler.extension
+package by.shostko.statushandler.paging
 
 import androidx.paging.ItemKeyedDataSource
 import androidx.paging.PageKeyedDataSource
