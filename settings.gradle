@@ -1,1 +1,1 @@
-include ':sample', ':library', ':library-viewmodel'
+include ':sample', ':status-handler', ':status-handler-viewmodel'
