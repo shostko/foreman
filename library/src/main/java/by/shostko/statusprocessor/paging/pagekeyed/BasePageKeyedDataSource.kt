@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import by.shostko.statusprocessor.Action
 import by.shostko.statusprocessor.BaseStatusProcessor
+import by.shostko.statusprocessor.Direction
 import by.shostko.statusprocessor.extension.asString
 import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
 import com.uber.autodispose.autoDisposable
@@ -41,7 +42,7 @@ abstract class BasePageKeyedDataSource<K, V>(
 
     final override fun loadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<K, V>) {
         Timber.tag(tag).d("loadInitial for %s", params.asString())
-        statusProcessor.updateLoading()
+        statusProcessor.updateLoading(Direction.FULL)
         try {
             onLoadInitial(params, callback)
         } catch (e: Throwable) {
@@ -53,7 +54,7 @@ abstract class BasePageKeyedDataSource<K, V>(
 
     final override fun loadAfter(params: LoadParams<K>, callback: LoadCallback<K, V>) {
         Timber.tag(tag).d("loadAfter for %s", params.asString())
-        statusProcessor.updateLoadingForward()
+        statusProcessor.updateLoading(Direction.FORWARD)
         try {
             onLoadAfter(params, callback)
         } catch (e: Throwable) {
@@ -65,7 +66,7 @@ abstract class BasePageKeyedDataSource<K, V>(
 
     final override fun loadBefore(params: LoadParams<K>, callback: LoadCallback<K, V>) {
         Timber.tag(tag).d("loadBefore for %s", params.asString())
-        statusProcessor.updateLoadingBackward()
+        statusProcessor.updateLoading(Direction.BACKWARD)
         try {
             onLoadBefore(params, callback)
         } catch (e: Throwable) {

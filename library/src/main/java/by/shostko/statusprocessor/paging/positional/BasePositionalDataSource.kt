@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import by.shostko.statusprocessor.Action
 import by.shostko.statusprocessor.BaseStatusProcessor
+import by.shostko.statusprocessor.Direction
 import by.shostko.statusprocessor.extension.asString
 import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
 import com.uber.autodispose.autoDisposable
@@ -41,7 +42,7 @@ abstract class BasePositionalDataSource<V>(
 
     final override fun loadInitial(params: LoadInitialParams, callback: LoadInitialCallback<V>) {
         Timber.tag(tag).d("loadInitial for %s", params.asString())
-        statusProcessor.updateLoading()
+        statusProcessor.updateLoading(Direction.FULL)
         try {
             onLoadInitial(params, callback)
         } catch (e: Throwable) {
@@ -53,7 +54,7 @@ abstract class BasePositionalDataSource<V>(
 
     final override fun loadRange(params: LoadRangeParams, callback: LoadRangeCallback<V>) {
         Timber.tag(tag).d("loadRange for %s", params.asString())
-        statusProcessor.updateLoading()
+        statusProcessor.updateLoading(Direction.FULL)
         try {
             onLoadRange(params, callback)
         } catch (e: Throwable) {

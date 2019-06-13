@@ -1,20 +1,11 @@
-@file:Suppress("unused")
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
 
 package by.shostko.statusprocessor
 
-import androidx.work.Data
-import androidx.work.workDataOf
-import by.shostko.statusprocessor.Const.KEY_DIRECTION
-import by.shostko.statusprocessor.Const.KEY_ERROR
-import by.shostko.statusprocessor.Const.KEY_ERROR_MESSAGE_LOCALIZED
-import by.shostko.statusprocessor.Const.KEY_STATUS
-
-abstract class BaseLoadingStatus<E>(open val direction: Direction, open val error: E?)
-
-enum class Status {
-    SUCCESS,
-    ERROR,
-    LOADING
+abstract class BaseLoadingStatus<E>(open val direction: Direction, open val throwable: Throwable?, open val error: E?) {
+    fun isLoading() = direction != Direction.NONE
+    fun isFailed() = throwable != null || error != null
+    fun isSuccess() = direction == Direction.NONE && throwable == null && error == null
 }
 
 enum class Direction {
@@ -25,56 +16,43 @@ enum class Direction {
 }
 
 data class LoadingStatus(
-    val status: Status,
     override val direction: Direction,
+    override val throwable: Throwable?,
     override val error: String?
-) : BaseLoadingStatus<String>(direction, error) {
+) : BaseLoadingStatus<String>(direction, throwable, error) {
 
     companion object {
 
+        fun success(): LoadingStatus {
+            return LoadingStatus(Direction.NONE, null, null)
+        }
+
         fun loading(direction: Direction): LoadingStatus {
-            return LoadingStatus(Status.LOADING, direction, null)
+            return LoadingStatus(direction, null, null)
         }
 
         fun loading(): LoadingStatus {
-            return LoadingStatus(Status.LOADING, Direction.FULL, null)
+            return LoadingStatus(Direction.FULL, null, null)
         }
 
         fun loadingBackward(): LoadingStatus {
-            return LoadingStatus(Status.LOADING, Direction.BACKWARD, null)
+            return LoadingStatus(Direction.BACKWARD, null, null)
         }
 
         fun loadingForward(): LoadingStatus {
-            return LoadingStatus(Status.LOADING, Direction.FORWARD, null)
-        }
-
-        fun success(error: String? = null): LoadingStatus {
-            return LoadingStatus(Status.SUCCESS, Direction.NONE, error)
+            return LoadingStatus(Direction.FORWARD, null, null)
         }
 
         fun error(error: String? = null): LoadingStatus {
-            return LoadingStatus(Status.ERROR, Direction.NONE, error)
+            return LoadingStatus(Direction.NONE, null, error)
+        }
+
+        fun error(throwable: Throwable, error: String?): LoadingStatus {
+            return LoadingStatus(Direction.NONE, throwable, error)
         }
 
         fun error(throwable: Throwable): LoadingStatus {
-            return LoadingStatus(Status.ERROR, Direction.NONE, throwable.message)
+            return LoadingStatus(Direction.NONE, throwable, throwable.message)
         }
     }
 }
-
-fun LoadingStatus.toWorkerData(): Data = workDataOf(
-    KEY_STATUS to status.name,
-    KEY_DIRECTION to direction.name,
-    KEY_ERROR to error
-)
-
-fun LoadingStatus.Companion.fromWorkerData(data: Data): LoadingStatus = LoadingStatus(
-    status = data.getString(KEY_STATUS)?.let { Status.valueOf(it) } ?: throw UnsupportedOperationException("$KEY_STATUS should be provided"),
-    direction = data.getString(KEY_DIRECTION)?.let { Direction.valueOf(it) }
-        ?: throw UnsupportedOperationException("$KEY_DIRECTION should be provided"),
-    error = data.getString(KEY_ERROR)
-)
-
-fun LoadingStatus.Companion.fromWorkerFailedData(data: Data): LoadingStatus = error(
-    error = data.getString(KEY_ERROR_MESSAGE_LOCALIZED)
-)
