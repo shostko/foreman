@@ -3,7 +3,7 @@ package by.shostko.statusprocessor.viewmodel
 import androidx.annotation.CallSuper
 import androidx.lifecycle.LifecycleOwner
 import androidx.recyclerview.widget.RecyclerView
-import by.shostko.statusprocessor.BaseLoadingStatus
+import by.shostko.statusprocessor.BaseStatus
 import by.shostko.statusprocessor.BaseStatusProcessor
 import by.shostko.statusprocessor.Direction
 import by.shostko.statusprocessor.RealItemsCountProvider
@@ -14,7 +14,7 @@ import io.reactivex.processors.BehaviorProcessor
 @Suppress("unused", "MemberVisibilityCanBePrivate")
 abstract class BaseViewModel<E>(
     private val noError: E,
-    statusProcessorCreator: (LifecycleOwner) -> BaseStatusProcessor<out BaseLoadingStatus<E>>
+    statusProcessorCreator: (LifecycleOwner) -> BaseStatusProcessor<out BaseStatus<E>>
 ) : LifecycledViewModel() {
 
     protected val statusProcessor by lazy { statusProcessorCreator.invoke(this) }

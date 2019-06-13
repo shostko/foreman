@@ -13,17 +13,17 @@ enum class Action {
     RETRY
 }
 
-class StatusProcessor(lifecycleOwner: LifecycleOwner) : BaseStatusProcessor<LoadingStatus>(lifecycleOwner) {
+class StatusProcessor(lifecycleOwner: LifecycleOwner) : BaseStatusProcessor<Status>(lifecycleOwner) {
 
-    override fun createStatusLoading(direction: Direction): LoadingStatus = LoadingStatus.loading(direction)
+    override fun createStatusLoading(direction: Direction): Status = Status.loading(direction)
 
-    override fun createStatusError(throwable: Throwable): LoadingStatus = LoadingStatus.error(throwable)
+    override fun createStatusError(throwable: Throwable): Status = Status.error(throwable)
 
-    override fun createStatusSuccess(): LoadingStatus = LoadingStatus.success()
+    override fun createStatusSuccess(): Status = Status.success()
 }
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
-abstract class BaseStatusProcessor<STATUS : BaseLoadingStatus<*>>(private val lifecycleOwner: LifecycleOwner) {
+abstract class BaseStatusProcessor<STATUS : BaseStatus<*>>(private val lifecycleOwner: LifecycleOwner) {
 
     @Suppress("LeakingThis")
     private val statusProcessor: FlowableProcessor<STATUS> = BehaviorProcessor.createDefault(createStatusLoading(Direction.FULL))
