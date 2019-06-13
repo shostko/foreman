@@ -61,6 +61,10 @@ abstract class CustomViewModel<E>(noError: E, factory: Status.Factory<E>) : Life
         statusProcessor.refresh()
     }
 
+    protected fun postCollectionSize(collection: Collection<*>) {
+        itemsEmptyFlowableProcessor.onNext(collection.isEmpty())
+    }
+
     protected fun postCollectionSize(itemCount: Int) {
         itemsEmptyFlowableProcessor.onNext(itemCount == 0)
     }
