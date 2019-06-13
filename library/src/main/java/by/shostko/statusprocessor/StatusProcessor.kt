@@ -15,14 +15,14 @@ enum class Action {
     RETRY
 }
 
-class StatusProcessor<STATUS : Status<*>>(private val lifecycleOwner: LifecycleOwner, private val factory: Status.Factory<STATUS>) {
+class StatusProcessor<E>(private val lifecycleOwner: LifecycleOwner, private val factory: Status.Factory<E>) {
 
     @Suppress("LeakingThis")
-    private val statusProcessor: FlowableProcessor<STATUS> = BehaviorProcessor.createDefault(factory.createWorking(Direction.FULL))
+    private val statusProcessor: FlowableProcessor<Status<E>> = BehaviorProcessor.createDefault(factory.createWorking(Direction.FULL))
 
     private val actionProcessor: FlowableProcessor<Action> = PublishProcessor.create()
 
-    val status: Flowable<STATUS> = statusProcessor.hide()
+    val status: Flowable<Status<E>> = statusProcessor.hide()
 
     val action: Flowable<Action> = actionProcessor.hide()
 
@@ -34,15 +34,11 @@ class StatusProcessor<STATUS : Status<*>>(private val lifecycleOwner: LifecycleO
         actionProcessor.onNext(Action.REFRESH)
     }
 
-    fun update(loadingStatus: STATUS) {
-        statusProcessor.onNext(loadingStatus)
-    }
+    fun updateWorking(direction: Direction) = statusProcessor.onNext(factory.createWorking(direction))
 
-    fun updateWorking(direction: Direction) = update(factory.createWorking(direction))
+    fun updateFailed(throwable: Throwable) = statusProcessor.onNext(factory.createFailed(throwable))
 
-    fun updateFailed(throwable: Throwable) = update(factory.createFailed(throwable))
-
-    fun updateSuccess() = update(factory.createSuccess())
+    fun updateSuccess() = statusProcessor.onNext(factory.createSuccess())
 
     fun <T> wrapSingleRequest(errorItem: T? = null, callable: () -> Single<T>): Flowable<T> =
         action.startWith(Action.REFRESH)

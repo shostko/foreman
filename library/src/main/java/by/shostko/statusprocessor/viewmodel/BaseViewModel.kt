@@ -1,27 +1,25 @@
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+
 package by.shostko.statusprocessor.viewmodel
 
 import androidx.annotation.CallSuper
-import androidx.lifecycle.LifecycleOwner
 import androidx.recyclerview.widget.RecyclerView
-import by.shostko.statusprocessor.Status
-import by.shostko.statusprocessor.StatusProcessor
-import by.shostko.statusprocessor.Direction
-import by.shostko.statusprocessor.RealItemsCountProvider
+import by.shostko.statusprocessor.*
 import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
 import io.reactivex.processors.BehaviorProcessor
 
-@Suppress("unused", "MemberVisibilityCanBePrivate")
-abstract class BaseViewModel<E>(
-    private val noError: E,
-    statusProcessorCreator: (LifecycleOwner) -> StatusProcessor<out Status<E>>
-) : LifecycledViewModel() {
+abstract class SimpleViewModel : CustomViewModel<Unit>(Unit, SimpleStatusFactory())
 
-    protected val statusProcessor by lazy { statusProcessorCreator.invoke(this) }
+abstract class CustomViewModel<E>(noError: E, factory: Status.Factory<E>) : LifecycledViewModel() {
+
+    private val noErrorPair: Pair<Throwable, E> = Pair(Throwable(), noError)
+
+    protected val statusProcessor by lazy { StatusProcessor(this, factory) }
 
     protected val itemsEmptyFlowableProcessor = BehaviorProcessor.createDefault(true)
 
-    private val errorFlowableProcessor = BehaviorProcessor.createDefault(noError)
+    private val errorFlowableProcessor = BehaviorProcessor.createDefault(noErrorPair)
 
     private var itemsDataObserver: BaseItemsObserver? = null
 
@@ -41,21 +39,25 @@ abstract class BaseViewModel<E>(
         })
         .distinctUntilChanged()
 
+    val throwable: Flowable<Throwable> = Flowable.merge(
+        statusProcessor.status.map { it.throwable ?: noErrorPair.first },
+        errorFlowableProcessor.map { it.first }
+    ).distinctUntilChanged()
+
     val error: Flowable<E> = Flowable.merge(
-        statusProcessor.status.map { it.error ?: noError },
-        errorFlowableProcessor
-    )
-        .distinctUntilChanged()
+        statusProcessor.status.map { it.error ?: noErrorPair.second },
+        errorFlowableProcessor.map { it.second }
+    ).distinctUntilChanged()
 
     @CallSuper
     open fun retry() {
-        errorFlowableProcessor.onNext(noError)
+        errorFlowableProcessor.onNext(noErrorPair)
         statusProcessor.retry()
     }
 
     @CallSuper
     open fun refresh() {
-        errorFlowableProcessor.onNext(noError)
+        errorFlowableProcessor.onNext(noErrorPair)
         statusProcessor.refresh()
     }
 
