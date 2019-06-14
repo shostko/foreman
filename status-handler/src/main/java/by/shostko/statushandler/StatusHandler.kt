@@ -2,7 +2,6 @@
 
 package by.shostko.statushandler
 
-import androidx.lifecycle.LifecycleOwner
 import io.reactivex.Completable
 import io.reactivex.Flowable
 import io.reactivex.Single
@@ -16,7 +15,7 @@ enum class Action {
     RETRY
 }
 
-class StatusHandler<E>(private val lifecycleOwner: LifecycleOwner, private val factory: Status.Factory<E>) {
+class StatusHandler<E>(private val factory: Status.Factory<E>) {
 
     private val statusProcessor: FlowableProcessor<Status<E>> = BehaviorProcessor.createDefault(factory.createWorking(Direction.FULL))
 

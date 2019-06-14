@@ -15,7 +15,7 @@ abstract class CustomViewModel<E>(noError: E, factory: Status.Factory<E>) : Life
 
     private val noErrorPair: Pair<Throwable, E> = Pair(Throwable(), noError)
 
-    protected val statusHandler by lazy { StatusHandler(this, factory) }
+    protected val statusHandler by lazy { StatusHandler(factory) }
 
     protected val itemsEmptyFlowableProcessor = BehaviorProcessor.createDefault(true)
 
