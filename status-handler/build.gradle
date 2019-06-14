@@ -1,0 +1,36 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'com.novoda.bintray-release'
+
+publish {
+    userOrg = 'shostko'
+    repoName = 'android'
+    groupId = 'by.shostko'
+    artifactId = 'status-handler'
+    publishVersion = '0.2.1'
+    desc = 'Helper to handle statuses'
+    website = 'https://github.com/shostko/status-handler'
+}
+
+android {
+    compileSdkVersion 29
+
+    defaultConfig {
+        minSdkVersion 14
+        targetSdkVersion 29
+        versionCode 17
+        versionName "0.2.1"
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    compileOnly 'androidx.annotation:annotation:1.1.0'
+    compileOnly 'io.reactivex.rxjava2:rxjava:2.2.8'
+
+    implementation 'com.jakewharton.timber:timber:4.7.1'
+}
