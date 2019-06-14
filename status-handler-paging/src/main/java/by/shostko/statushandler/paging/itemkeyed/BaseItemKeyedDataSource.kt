@@ -2,7 +2,6 @@ package by.shostko.statushandler.paging.itemkeyed
 
 import androidx.paging.ItemKeyedDataSource
 import by.shostko.statushandler.Action
-import by.shostko.statushandler.Direction
 import by.shostko.statushandler.StatusHandler
 import by.shostko.statushandler.paging.asString
 import io.reactivex.schedulers.Schedulers
