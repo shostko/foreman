@@ -23,6 +23,8 @@ abstract class CustomViewModel<E>(noError: E, factory: Status.Factory<E>) : Life
 
     private var itemsDataObserver: BaseItemsObserver? = null
 
+    val status: Flowable<Status<E>> = statusHandler.status
+
     val progress: Flowable<Direction> = Flowable.combineLatest(
         statusHandler.status
             .distinctUntilChanged()
