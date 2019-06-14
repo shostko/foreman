@@ -16,16 +16,16 @@ repositories {
 Base module integration:
 ```gradle
 dependencies {
-    implementation 'by.shostko.android:status-handler:0.+'
+    implementation 'by.shostko:status-handler:0.+'
 }
 ```
 
 For additional support of easy creation DataSources for paging, ViewModels and Workers add any of these:
 ```gradle
 dependencies {
-    implementation 'by.shostko.android:status-handler-paging:0.+'
-    implementation 'by.shostko.android:status-handler-viewmodel:0.+'
-    implementation 'by.shostko.android:status-handler-worker:0.+'
+    implementation 'by.shostko:status-handler-paging:0.+'
+    implementation 'by.shostko:status-handler-viewmodel:0.+'
+    implementation 'by.shostko:status-handler-worker:0.+'
 }
 ```
 
