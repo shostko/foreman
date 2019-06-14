@@ -13,7 +13,7 @@ abstract class SimpleViewModel : CustomViewModel<Unit>(Unit, SimpleStatusFactory
 
 abstract class CustomViewModel<E>(noError: E, factory: Status.Factory<E>) : LifecycledViewModel() {
 
-    private val noErrorPair: Pair<Throwable, E> = Pair(Throwable(), noError)
+    private val noErrorPair: Pair<Throwable, E> = Pair(NoErrorThrowable(), noError)
 
     protected val statusHandler by lazy { StatusHandler(factory) }
 
