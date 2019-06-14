@@ -32,7 +32,7 @@ abstract class BasePositionalDataSource<V>(
 
     final override fun loadInitial(params: LoadInitialParams, callback: LoadInitialCallback<V>) {
         Timber.tag(tag).d("loadInitial for %s", params.asString())
-        statusHandler.updateWorking(Direction.FULL)
+        statusHandler.updateWorking()
         try {
             onLoadInitial(params, callback)
         } catch (e: Throwable) {
@@ -44,7 +44,7 @@ abstract class BasePositionalDataSource<V>(
 
     final override fun loadRange(params: LoadRangeParams, callback: LoadRangeCallback<V>) {
         Timber.tag(tag).d("loadRange for %s", params.asString())
-        statusHandler.updateWorking(Direction.FULL)
+        statusHandler.updateWorking()
         try {
             onLoadRange(params, callback)
         } catch (e: Throwable) {

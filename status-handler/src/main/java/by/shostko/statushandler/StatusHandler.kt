@@ -33,7 +33,11 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
         actionProcessor.onNext(Action.REFRESH)
     }
 
-    fun updateWorking(direction: Direction) = statusProcessor.onNext(factory.createWorking(direction))
+    fun updateWorking() = statusProcessor.onNext(factory.createWorking(Direction.FULL))
+
+    fun updateWorkingForward() = statusProcessor.onNext(factory.createWorking(Direction.FORWARD))
+
+    fun updateWorkingBackward() = statusProcessor.onNext(factory.createWorking(Direction.BACKWARD))
 
     fun updateFailed(throwable: Throwable) = statusProcessor.onNext(factory.createFailed(throwable))
 
@@ -41,7 +45,7 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
 
     fun <T> wrapSingleRequest(errorItem: T? = null, callable: () -> Single<T>): Flowable<T> =
         action.startWith(Action.REFRESH)
-            .doOnNext { updateWorking(Direction.FULL) }
+            .doOnNext { updateWorking() }
             .switchMapSingle { _ ->
                 Single.defer(callable)
                     .subscribeOn(Schedulers.io())
@@ -52,7 +56,7 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
 
     fun wrapCompletableRequest(callable: () -> Completable): Completable =
         action.startWith(Action.REFRESH)
-            .doOnNext { updateWorking(Direction.FULL) }
+            .doOnNext { updateWorking() }
             .switchMapCompletable { _ ->
                 Completable.defer(callable)
                     .subscribeOn(Schedulers.io())

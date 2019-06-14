@@ -32,7 +32,7 @@ abstract class BasePageKeyedDataSource<K, V>(
 
     final override fun loadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<K, V>) {
         Timber.tag(tag).d("loadInitial for %s", params.asString())
-        statusHandler.updateWorking(Direction.FULL)
+        statusHandler.updateWorking()
         try {
             onLoadInitial(params, callback)
         } catch (e: Throwable) {
@@ -44,7 +44,7 @@ abstract class BasePageKeyedDataSource<K, V>(
 
     final override fun loadAfter(params: LoadParams<K>, callback: LoadCallback<K, V>) {
         Timber.tag(tag).d("loadAfter for %s", params.asString())
-        statusHandler.updateWorking(Direction.FORWARD)
+        statusHandler.updateWorkingForward()
         try {
             onLoadAfter(params, callback)
         } catch (e: Throwable) {
@@ -56,7 +56,7 @@ abstract class BasePageKeyedDataSource<K, V>(
 
     final override fun loadBefore(params: LoadParams<K>, callback: LoadCallback<K, V>) {
         Timber.tag(tag).d("loadBefore for %s", params.asString())
-        statusHandler.updateWorking(Direction.BACKWARD)
+        statusHandler.updateWorkingBackward()
         try {
             onLoadBefore(params, callback)
         } catch (e: Throwable) {
