@@ -9,7 +9,7 @@ import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
 import io.reactivex.processors.BehaviorProcessor
 
-abstract class SimpleViewModel : CustomViewModel<Unit>(Unit, SimpleStatusFactory())
+abstract class SimpleViewModel : CustomViewModel<Unit>(Unit, SimpleStatusFactory)
 
 abstract class CustomViewModel<E>(noError: E, factory: Status.Factory<E>) : LifecycledViewModel() {
 

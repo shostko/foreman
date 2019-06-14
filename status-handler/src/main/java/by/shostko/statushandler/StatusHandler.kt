@@ -41,6 +41,8 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
 
     fun updateFailed(throwable: Throwable) = statusProcessor.onNext(factory.createFailed(throwable))
 
+    fun updateFailed(map: Map<String, Any>) = statusProcessor.onNext(factory.createFailed(map))
+
     fun updateSuccess() = statusProcessor.onNext(factory.createSuccess())
 
     fun <T> wrapSingleRequest(errorItem: T? = null, callable: () -> Single<T>): Flowable<T> =
