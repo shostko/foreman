@@ -8,17 +8,20 @@ import androidx.lifecycle.ViewModel
 
 abstract class LifecycledViewModel : ViewModel(), LifecycleOwner {
 
-    private val registry: LifecycleRegistry by lazy {
+    private val registryDelegate = lazy {
         LifecycleRegistry(this).apply {
             markState(Lifecycle.State.STARTED)
         }
     }
+    private val registry: LifecycleRegistry by registryDelegate
 
     override fun getLifecycle(): Lifecycle = registry
 
     @CallSuper
     override fun onCleared() {
         super.onCleared()
-        registry.markState(Lifecycle.State.DESTROYED)
+        if (registryDelegate.isInitialized()) {
+            registry.markState(Lifecycle.State.DESTROYED)
+        }
     }
 }
