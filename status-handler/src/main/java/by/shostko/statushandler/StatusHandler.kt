@@ -56,18 +56,19 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
                     .onErrorResumeNext { if (errorItem == null) Single.never() else Single.just(errorItem) }
             }
 
-    fun wrapCompletableRequest(callable: () -> Completable): Completable =
+    fun wrapCompletableRequest(callable: () -> Completable): Flowable<Unit> =
         action.startWith(Action.REFRESH)
             .doOnNext { updateWorking() }
-            .switchMapCompletable { _ ->
+            .switchMapSingle { _ ->
                 Completable.defer(callable)
                     .subscribeOn(Schedulers.io())
                     .doOnComplete { updateSuccess() }
                     .doOnError { updateFailed(it) }
                     .onErrorResumeNext { Completable.never() }
+                    .toSingleDefault(Unit)
             }
 
     fun <T> wrapOneRequest(errorItem: T? = null, callable: () -> T): Flowable<T> = wrapSingleRequest(errorItem, { Single.fromCallable(callable) })
 
-    fun wrapOneRequest(action: () -> Unit): Completable = wrapCompletableRequest { Completable.fromAction(action) }
+    fun wrapOneRequest(action: () -> Unit): Flowable<Unit> = wrapCompletableRequest { Completable.fromAction(action) }
 }

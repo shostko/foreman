@@ -9,17 +9,18 @@ import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
 import io.reactivex.processors.BehaviorProcessor
 
-abstract class SimpleViewModel : CustomViewModel<Unit>(Unit, SimpleStatusFactory)
+abstract class SimpleViewModel : CustomViewModel<Unit>(Unit, SimpleStatusFactory) {
+    abstract class Message : CustomViewModel<String>("", MessageStatus.Factory())
+    abstract class Class : CustomViewModel<java.lang.Class<out Throwable>>(NoErrorThrowable::class.java, ClassStatus.Factory())
+}
 
 abstract class CustomViewModel<E>(noError: E, factory: Status.Factory<E>) : LifecycledViewModel() {
 
-    private val noErrorPair: Pair<Throwable, E> = Pair(NoErrorThrowable(), noError)
+    private val noErrorPair = Pair(NoErrorThrowable(), noError)
 
     protected val statusHandler by lazy { StatusHandler(factory) }
 
     protected val itemsEmptyFlowableProcessor = BehaviorProcessor.createDefault(true)
-
-    private val errorFlowableProcessor = BehaviorProcessor.createDefault(noErrorPair)
 
     private var itemsDataObserver: BaseItemsObserver? = null
 
@@ -41,25 +42,17 @@ abstract class CustomViewModel<E>(noError: E, factory: Status.Factory<E>) : Life
         })
         .distinctUntilChanged()
 
-    val throwable: Flowable<Throwable> = Flowable.merge(
-        statusHandler.status.map { it.throwable ?: noErrorPair.first },
-        errorFlowableProcessor.map { it.first }
-    ).distinctUntilChanged()
+    val throwable: Flowable<Throwable> = statusHandler.status.map { it.throwable ?: noErrorPair.first }
 
-    val error: Flowable<E> = Flowable.merge(
-        statusHandler.status.map { it.error ?: noErrorPair.second },
-        errorFlowableProcessor.map { it.second }
-    ).distinctUntilChanged()
+    val error: Flowable<E> = statusHandler.status.map { it.error ?: noErrorPair.second }
 
     @CallSuper
     open fun retry() {
-        errorFlowableProcessor.onNext(noErrorPair)
         statusHandler.retry()
     }
 
     @CallSuper
     open fun refresh() {
-        errorFlowableProcessor.onNext(noErrorPair)
         statusHandler.refresh()
     }
 
