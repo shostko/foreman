@@ -19,6 +19,7 @@ abstract class Status<E>(
     fun isSuccess() = direction == Direction.NONE && throwable == null && error == null
 
     interface Factory<E> {
+        fun createInitial(): Status<E>
         fun createWorking(direction: Direction): Status<E>
         fun createSuccess(): Status<E>
         fun createSuccess(map: Map<String, Any>): Status<E>
@@ -33,6 +34,7 @@ data class SimpleStatus<E>(
     override val error: E?
 ) : Status<E>(direction, throwable, error) {
     abstract class Factory<E> : Status.Factory<E> {
+        override fun createInitial(): Status<E> = InitialStatus()
         override fun createWorking(direction: Direction): Status<E> = LoadingStatus(direction)
         override fun createSuccess(): Status<E> = SuccessStatus()
         override fun createSuccess(map: Map<String, Any>): Status<E> = SuccessStatus()
@@ -41,11 +43,14 @@ data class SimpleStatus<E>(
     }
 }
 
+open class SimpleStatusFactory : SimpleStatus.Factory<Unit>()
+
 data class MessageStatus(
     override val direction: Direction,
     override val throwable: Throwable?
 ) : Status<String>(direction, throwable, throwable?.message) {
     open class Factory : Status.Factory<String> {
+        override fun createInitial() = MessageStatus(Direction.NONE, null)
         override fun createWorking(direction: Direction) = MessageStatus(direction, null)
         override fun createSuccess() = MessageStatus(Direction.NONE, null)
         override fun createSuccess(map: Map<String, Any>) = MessageStatus(Direction.NONE, null)
@@ -59,11 +64,18 @@ data class ClassStatus(
     override val throwable: Throwable?
 ) : Status<Class<out Throwable>>(direction, throwable, throwable?.javaClass) {
     open class Factory : Status.Factory<Class<out Throwable>> {
+        override fun createInitial() = ClassStatus(Direction.NONE, null)
         override fun createWorking(direction: Direction) = ClassStatus(direction, null)
         override fun createSuccess() = ClassStatus(Direction.NONE, null)
         override fun createSuccess(map: Map<String, Any>) = ClassStatus(Direction.NONE, null)
         override fun createFailed(throwable: Throwable) = ClassStatus(Direction.NONE, throwable)
         override fun createFailed(map: Map<String, Any>) = ClassStatus(Direction.NONE, MapThrowable(map))
+    }
+}
+
+private class InitialStatus<E> : Status<E>(Direction.NONE, null, null) {
+    override fun toString(): String {
+        return "Status{INITIAL}"
     }
 }
 
@@ -90,5 +102,3 @@ private data class FailedMapStatus<E>(val map: Map<String, Any>) : Status<E>(Dir
         return "Status{FAILED:Map(${map.entries.joinToString()})"
     }
 }
-
-object SimpleStatusFactory : SimpleStatus.Factory<Unit>()

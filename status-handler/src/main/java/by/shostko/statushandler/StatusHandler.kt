@@ -17,7 +17,7 @@ enum class Action {
 
 class StatusHandler<E>(private val factory: Status.Factory<E>) {
 
-    private val statusProcessor: FlowableProcessor<Status<E>> = BehaviorProcessor.createDefault(factory.createWorking(Direction.FULL))
+    private val statusProcessor: FlowableProcessor<Status<E>> = BehaviorProcessor.createDefault(factory.createInitial())
 
     private val actionProcessor: FlowableProcessor<Action> = PublishProcessor.create()
 
