@@ -9,7 +9,7 @@ publish {
     repoName = 'android'
     groupId = 'by.shostko'
     artifactId = 'status-handler-viewmodel'
-    publishVersion = '0.2.2'
+    publishVersion = '0.2.3'
     desc = 'Helper to handle statuses. ViewModel support'
     website = 'https://github.com/shostko/status-handler'
 }
@@ -20,8 +20,8 @@ android {
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 29
-        versionCode 18
-        versionName "0.2.2"
+        versionCode 19
+        versionName "0.2.3"
     }
 }
 
