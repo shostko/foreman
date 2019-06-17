@@ -9,7 +9,10 @@ import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
 import io.reactivex.processors.BehaviorProcessor
 
-abstract class SimpleViewModel : CustomViewModel<Unit>(Unit, SimpleStatusFactory)
+abstract class SimpleViewModel : CustomViewModel<Unit>(Unit, SimpleStatusFactory) {
+    abstract class Message : CustomViewModel<String>("", MessageStatus.Factory())
+    abstract class Class : CustomViewModel<java.lang.Class<out Throwable>>(NoErrorThrowable::class.java, ClassStatus.Factory())
+}
 
 abstract class CustomViewModel<E>(noError: E, factory: Status.Factory<E>) : LifecycledViewModel() {
 
