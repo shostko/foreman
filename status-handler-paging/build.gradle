@@ -9,19 +9,19 @@ publish {
     repoName = 'android'
     groupId = 'by.shostko'
     artifactId = 'status-handler-paging'
-    publishVersion = '0.2.4'
+    publishVersion = rootProject.ext.versionName
     desc = 'Helper to handle statuses. Paging support'
     website = 'https://github.com/shostko/status-handler'
 }
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        minSdkVersion 14
-        targetSdkVersion 29
-        versionCode 20
-        versionName "0.2.4"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode rootProject.ext.versionCode
+        versionName rootProject.ext.versionName
     }
 }
 
