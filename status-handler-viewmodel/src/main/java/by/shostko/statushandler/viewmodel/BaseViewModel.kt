@@ -16,15 +16,17 @@ abstract class SimpleViewModel : CustomViewModel<Unit>(Unit, SimpleStatusFactory
 
 abstract class CustomViewModel<E>(noError: E, factory: Status.Factory<E>) : LifecycledViewModel() {
 
-    private val noErrorPair = Pair(NoErrorThrowable(), noError)
-
     protected val statusHandler by lazy { StatusHandler(factory) }
 
-    protected val itemsEmptyFlowableProcessor = BehaviorProcessor.createDefault(true)
+    private val noErrorPair = Pair(NoErrorThrowable(), noError)
+
+    private val itemsEmptyFlowableProcessor = BehaviorProcessor.createDefault(true)
 
     private var itemsDataObserver: BaseItemsObserver? = null
 
     val status: Flowable<Status<E>> = statusHandler.status
+
+    val hasItems: Flowable<Boolean> = itemsEmptyFlowableProcessor.map { !it }
 
     val progress: Flowable<Direction> = Flowable.combineLatest(
         statusHandler.status
