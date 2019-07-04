@@ -14,9 +14,9 @@ abstract class SimpleViewModel : CustomViewModel<Unit>(Unit, SimpleStatusFactory
     abstract class Class : CustomViewModel<java.lang.Class<out Throwable>>(NoErrorThrowable::class.java, ClassStatus.Factory())
 }
 
-abstract class CustomViewModel<E>(noError: E, factory: Status.Factory<E>) : LifecycledViewModel() {
+abstract class CustomViewModel<E> @JvmOverloads constructor(noError: E, private val factory: Status.Factory<E>? = null) : LifecycledViewModel() {
 
-    protected val statusHandler by lazy { StatusHandler(factory) }
+    protected val statusHandler by lazy { StatusHandler(requireFactory()) }
 
     private val noErrorPair = Pair(NoErrorThrowable(), noError)
 
@@ -47,6 +47,9 @@ abstract class CustomViewModel<E>(noError: E, factory: Status.Factory<E>) : Life
     val throwable: Flowable<Throwable> = statusHandler.status.map { it.throwable ?: noErrorPair.first }
 
     val error: Flowable<E> = statusHandler.status.map { it.error ?: noErrorPair.second }
+
+    protected open fun requireFactory(): Status.Factory<E> = factory
+        ?: throw UnsupportedOperationException("There is no correct Factory. You should provide it in constructor or override requireFactory()")
 
     @CallSuper
     open fun retry() {
