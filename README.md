@@ -1,6 +1,6 @@
 # StatusHandler
 
-[ ![Download](https://api.bintray.com/packages/shostko/android/status-handler/images/download.svg) ](https://bintray.com/shostko/android/SimpleAdapter/_latestVersion)
+[ ![Download](https://api.bintray.com/packages/shostko/android/status-handler/images/download.svg) ](https://bintray.com/shostko/android/status-handler/_latestVersion)
 Helper to handle statuses
 
 ## Integration
