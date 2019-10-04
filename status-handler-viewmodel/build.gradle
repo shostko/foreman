@@ -32,10 +32,10 @@ dependencies {
     compileOnly project(':status-handler')
 
     compileOnly 'androidx.annotation:annotation:1.1.0'
-    compileOnly 'androidx.recyclerview:recyclerview:1.1.0-alpha06'
-    compileOnly 'io.reactivex.rxjava2:rxjava:2.2.8'
-    compileOnly 'androidx.lifecycle:lifecycle-viewmodel:2.0.0'
-    kapt 'androidx.lifecycle:lifecycle-compiler:2.0.0'
+    compileOnly 'androidx.recyclerview:recyclerview:1.1.0-beta04'
+    compileOnly 'io.reactivex.rxjava2:rxjava:2.2.11'
+    compileOnly 'androidx.lifecycle:lifecycle-viewmodel:2.1.0'
+    kapt 'androidx.lifecycle:lifecycle-compiler:2.1.0'
 
     implementation 'com.jakewharton.timber:timber:4.7.1'
 }
