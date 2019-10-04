@@ -11,6 +11,7 @@ import io.reactivex.processors.PublishProcessor
 import io.reactivex.schedulers.Schedulers
 
 enum class Action {
+    PROCEED,
     REFRESH,
     RETRY
 }
@@ -25,12 +26,16 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
 
     val action: Flowable<Action> = actionProcessor.hide()
 
-    fun retry() {
-        actionProcessor.onNext(Action.RETRY)
+    fun proceed() {
+        actionProcessor.onNext(Action.PROCEED)
     }
 
     fun refresh() {
         actionProcessor.onNext(Action.REFRESH)
+    }
+
+    fun retry() {
+        actionProcessor.onNext(Action.RETRY)
     }
 
     fun updateWorking() = statusProcessor.onNext(factory.createWorking(Direction.FULL))
@@ -45,10 +50,24 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
 
     fun updateSuccess() = statusProcessor.onNext(factory.createSuccess())
 
-    fun <T> wrapSingleRequest(errorItem: T? = null, callable: () -> Single<T>): Flowable<T> =
-        action.startWith(Action.REFRESH)
+    fun <T> wrapSingleRequest(callable: () -> Single<T>): Flowable<T> = wrapSingleRequest(null, callable)
+
+    fun <T> wrapSingleRequest(errorItem: T?, callable: () -> Single<T>): Flowable<T> =
+        action.startWith(Action.PROCEED)
             .doOnNext { updateWorking() }
-            .switchMapSingle { _ ->
+            .switchMapSingle {
+                Single.defer(callable)
+                    .subscribeOn(Schedulers.io())
+                    .doOnSuccess { updateSuccess() }
+                    .doOnError { updateFailed(it) }
+                    .onErrorResumeNext { if (errorItem == null) Single.never() else Single.just(errorItem) }
+            }
+
+    fun <T> prepareSingleRequest(callable: () -> Single<T>): Flowable<T> = prepareSingleRequest(null, callable)
+
+    fun <T> prepareSingleRequest(errorItem: T?, callable: () -> Single<T>): Flowable<T> =
+        action.doOnNext { updateWorking() }
+            .switchMapSingle {
                 Single.defer(callable)
                     .subscribeOn(Schedulers.io())
                     .doOnSuccess { updateSuccess() }
@@ -57,9 +76,9 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
             }
 
     fun wrapCompletableRequest(callable: () -> Completable): Flowable<Unit> =
-        action.startWith(Action.REFRESH)
+        action.startWith(Action.PROCEED)
             .doOnNext { updateWorking() }
-            .switchMapSingle { _ ->
+            .switchMapSingle {
                 Completable.defer(callable)
                     .subscribeOn(Schedulers.io())
                     .doOnComplete { updateSuccess() }
@@ -68,7 +87,20 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
                     .toSingleDefault(Unit)
             }
 
-    fun <T> wrapOneRequest(errorItem: T? = null, callable: () -> T): Flowable<T> = wrapSingleRequest(errorItem, { Single.fromCallable(callable) })
+    fun prepareCompletableRequest(callable: () -> Completable): Flowable<Unit> =
+        action.doOnNext { updateWorking() }
+            .switchMapSingle {
+                Completable.defer(callable)
+                    .subscribeOn(Schedulers.io())
+                    .doOnComplete { updateSuccess() }
+                    .doOnError { updateFailed(it) }
+                    .onErrorResumeNext { Completable.never() }
+                    .toSingleDefault(Unit)
+            }
 
-    fun wrapOneRequest(action: () -> Unit): Flowable<Unit> = wrapCompletableRequest { Completable.fromAction(action) }
+    fun <T> wrapCallableRequest(callable: () -> T): Flowable<T> = wrapSingleRequest(null) { Single.fromCallable(callable) }
+
+    fun <T> wrapCallableRequest(errorItem: T?, callable: () -> T): Flowable<T> = wrapSingleRequest(errorItem) { Single.fromCallable(callable) }
+
+    fun wrapActionRequest(action: () -> Unit): Flowable<Unit> = wrapCompletableRequest { Completable.fromAction(action) }
 }
