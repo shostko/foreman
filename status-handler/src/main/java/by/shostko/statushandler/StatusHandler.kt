@@ -24,6 +24,8 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
 
     val action: Flowable<Action> = actionProcessor.hide()
 
+    // region action
+
     fun proceed() {
         actionProcessor.onNext(Action.PROCEED)
     }
@@ -36,6 +38,10 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
         actionProcessor.onNext(Action.RETRY)
     }
 
+    //endregion
+
+    // region status
+
     fun updateWorking() = statusProcessor.onNext(factory.createWorking(Direction.FULL))
 
     fun updateWorkingForward() = statusProcessor.onNext(factory.createWorking(Direction.FORWARD))
@@ -47,6 +53,10 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
     fun updateFailed(map: Map<String, Any>) = statusProcessor.onNext(factory.createFailed(map))
 
     fun updateSuccess() = statusProcessor.onNext(factory.createSuccess())
+
+    //endregion
+
+    // region Flowable
 
     fun <T> wrapFlowableRequest(callable: () -> Flowable<T>): Flowable<T> = wrapFlowableRequest(null, callable)
 
@@ -73,6 +83,10 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
                     .onErrorResumeNext { th: Throwable -> if (errorItem == null) Flowable.never() else Flowable.just(errorItem) }
             }
 
+    // endregion
+
+    // region Observable
+
     private fun <T> (() -> Observable<T>).toFlowable(): (() -> Flowable<T>) = { this().toFlowable(BackpressureStrategy.LATEST) }
 
     fun <T> wrapObservableRequest(callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(null, callable.toFlowable())
@@ -82,6 +96,10 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
     fun <T> prepareObservableRequest(callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(null, callable.toFlowable())
 
     fun <T> prepareObservableRequest(errorItem: T?, callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(errorItem, callable.toFlowable())
+
+    // endregion
+
+    // region Single
 
     fun <T> wrapSingleRequest(callable: () -> Single<T>): Flowable<T> = wrapSingleRequest(null, callable)
 
@@ -108,6 +126,10 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
                     .onErrorResumeNext { if (errorItem == null) Single.never() else Single.just(errorItem) }
             }
 
+    // endregion
+
+    // region Completable
+
     fun wrapCompletableRequest(callable: () -> Completable): Flowable<Unit> =
         action.startWith(Action.PROCEED)
             .doOnNext { updateWorking() }
@@ -131,9 +153,15 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
                     .toSingleDefault(Unit)
             }
 
+    // endregion
+
+    // region Not Reactive
+
     fun <T> wrapCallableRequest(callable: () -> T): Flowable<T> = wrapSingleRequest(null) { Single.fromCallable(callable) }
 
     fun <T> wrapCallableRequest(errorItem: T?, callable: () -> T): Flowable<T> = wrapSingleRequest(errorItem) { Single.fromCallable(callable) }
 
     fun wrapActionRequest(action: () -> Unit): Flowable<Unit> = wrapCompletableRequest { Completable.fromAction(action) }
+
+    // endregion
 }
