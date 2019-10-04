@@ -2,9 +2,7 @@
 
 package by.shostko.statushandler
 
-import io.reactivex.Completable
-import io.reactivex.Flowable
-import io.reactivex.Single
+import io.reactivex.*
 import io.reactivex.processors.BehaviorProcessor
 import io.reactivex.processors.FlowableProcessor
 import io.reactivex.processors.PublishProcessor
@@ -49,6 +47,41 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
     fun updateFailed(map: Map<String, Any>) = statusProcessor.onNext(factory.createFailed(map))
 
     fun updateSuccess() = statusProcessor.onNext(factory.createSuccess())
+
+    fun <T> wrapFlowableRequest(callable: () -> Flowable<T>): Flowable<T> = wrapFlowableRequest(null, callable)
+
+    fun <T> wrapFlowableRequest(errorItem: T?, callable: () -> Flowable<T>): Flowable<T> =
+        action.startWith(Action.PROCEED)
+            .doOnNext { updateWorking() }
+            .switchMap {
+                Flowable.defer(callable)
+                    .subscribeOn(Schedulers.io())
+                    .doOnNext { updateSuccess() }
+                    .doOnError { updateFailed(it) }
+                    .onErrorResumeNext { th: Throwable -> if (errorItem == null) Flowable.never() else Flowable.just(errorItem) }
+            }
+
+    fun <T> prepareFlowableRequest(callable: () -> Flowable<T>): Flowable<T> = prepareFlowableRequest(null, callable)
+
+    fun <T> prepareFlowableRequest(errorItem: T?, callable: () -> Flowable<T>): Flowable<T> =
+        action.doOnNext { updateWorking() }
+            .switchMap {
+                Flowable.defer(callable)
+                    .subscribeOn(Schedulers.io())
+                    .doOnNext { updateSuccess() }
+                    .doOnError { updateFailed(it) }
+                    .onErrorResumeNext { th: Throwable -> if (errorItem == null) Flowable.never() else Flowable.just(errorItem) }
+            }
+
+    private fun <T> (() -> Observable<T>).toFlowable(): (() -> Flowable<T>) = { this().toFlowable(BackpressureStrategy.LATEST) }
+
+    fun <T> wrapObservableRequest(callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(null, callable.toFlowable())
+
+    fun <T> wrapObservableRequest(errorItem: T?, callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(errorItem, callable.toFlowable())
+
+    fun <T> prepareObservableRequest(callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(null, callable.toFlowable())
+
+    fun <T> prepareObservableRequest(errorItem: T?, callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(errorItem, callable.toFlowable())
 
     fun <T> wrapSingleRequest(callable: () -> Single<T>): Flowable<T> = wrapSingleRequest(null, callable)
 
