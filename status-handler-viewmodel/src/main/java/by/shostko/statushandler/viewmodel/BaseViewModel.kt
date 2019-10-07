@@ -52,13 +52,18 @@ abstract class CustomViewModel<E> @JvmOverloads constructor(noError: E, private 
         ?: throw UnsupportedOperationException("There is no correct Factory. You should provide it in constructor or override requireFactory()")
 
     @CallSuper
-    open fun retry() {
-        statusHandler.retry()
+    open fun proceed() {
+        statusHandler.proceed()
     }
 
     @CallSuper
     open fun refresh() {
         statusHandler.refresh()
+    }
+
+    @CallSuper
+    open fun retry() {
+        statusHandler.retry()
     }
 
     protected fun postCollectionSize(collection: Collection<*>) {
