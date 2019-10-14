@@ -161,7 +161,13 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
 
     fun <T> wrapCallableRequest(errorItem: T?, callable: () -> T): Flowable<T> = wrapSingleRequest(errorItem) { Single.fromCallable(callable) }
 
+    fun <T> prepareCallableRequest(callable: () -> T): Flowable<T> = prepareSingleRequest(null) { Single.fromCallable(callable) }
+
+    fun <T> prepareCallableRequest(errorItem: T?, callable: () -> T): Flowable<T> = prepareSingleRequest(errorItem) { Single.fromCallable(callable) }
+
     fun wrapActionRequest(action: () -> Unit): Flowable<Unit> = wrapCompletableRequest { Completable.fromAction(action) }
+
+    fun prepareActionRequest(action: () -> Unit): Flowable<Unit> = prepareCompletableRequest { Completable.fromAction(action) }
 
     // endregion
 }
