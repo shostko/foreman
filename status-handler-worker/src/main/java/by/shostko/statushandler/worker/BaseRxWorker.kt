@@ -15,7 +15,7 @@ import io.reactivex.Single
 
 abstract class BaseRxWorker(context: Context, workerParameters: WorkerParameters) : RxWorker(context, workerParameters) {
 
-    internal open fun throwableToData(throwable: Throwable): Data = workDataOf(
+    protected open fun throwableToData(throwable: Throwable): Data = workDataOf(
         KEY_ERROR_CLASS to throwable::class.java.canonicalName,
         KEY_ERROR_MESSAGE to throwable.message,
         KEY_ERROR_MESSAGE_LOCALIZED to throwable.localizedMessage
