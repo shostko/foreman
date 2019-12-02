@@ -3,6 +3,7 @@ package by.shostko.statushandler.paging
 import androidx.paging.ItemKeyedDataSource
 import androidx.paging.PageKeyedDataSource
 import androidx.paging.PositionalDataSource
+import io.reactivex.Single
 
 fun Any.asString() = toString()
 
@@ -23,3 +24,17 @@ fun PositionalDataSource.LoadInitialParams.asString() =
 
 fun PositionalDataSource.LoadRangeParams.asString() =
     "LoadRangeParams(startPosition=$startPosition, loadSize=$loadSize)"
+
+fun <T> Single<T>.blockingGetWithoutWrap(): T = try {
+    onErrorResumeNext {
+        when (it) {
+            is java.lang.Error -> Single.error<T>(it)
+            is RuntimeException -> Single.error<T>(it)
+            else -> Single.error<T>(WrappingException(it))
+        }
+    }.blockingGet()
+} catch (e: WrappingException) {
+    throw e.cause
+}
+
+private class WrappingException(override val cause: Throwable) : RuntimeException(cause)

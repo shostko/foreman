@@ -1,6 +1,7 @@
 package by.shostko.statushandler.paging.positional
 
 import by.shostko.statushandler.StatusHandler
+import by.shostko.statushandler.paging.blockingGetWithoutWrap
 import io.reactivex.Scheduler
 import io.reactivex.Single
 import io.reactivex.disposables.CompositeDisposable
@@ -20,7 +21,7 @@ abstract class RxPositionalDataSource<V>(
     override fun onLoadInitial(params: LoadInitialParams, callback: LoadInitialCallback<V>) {
         val single = onLoad(params.requestedStartPosition, params.requestedLoadSize)
         if (scheduler == null) {
-            onSuccessResult(single.blockingGet(), params, callback)
+            onSuccessResult(single.blockingGetWithoutWrap(), params, callback)
         } else {
             disposable.add(
                 single.subscribeOn(scheduler)
@@ -37,7 +38,7 @@ abstract class RxPositionalDataSource<V>(
     override fun onLoadRange(params: LoadRangeParams, callback: LoadRangeCallback<V>) {
         val single = onLoad(params.startPosition, params.loadSize)
         if (scheduler == null) {
-            onSuccessResult(single.blockingGet(), params, callback)
+            onSuccessResult(single.blockingGetWithoutWrap(), params, callback)
         } else {
             disposable.add(
                 single.subscribeOn(scheduler)

@@ -1,6 +1,7 @@
 package by.shostko.statushandler.paging.singlerequest
 
 import by.shostko.statushandler.StatusHandler
+import by.shostko.statushandler.paging.blockingGetWithoutWrap
 import by.shostko.statushandler.paging.pagekeyed.BasePageKeyedDataSource
 import io.reactivex.Scheduler
 import io.reactivex.Single
@@ -21,7 +22,7 @@ abstract class RxSingleRequestDataSource<V>(
     override fun onLoadInitial(params: LoadInitialParams<Int>, callback: LoadInitialCallback<Int, V>) {
         val single = onLoad()
         if (scheduler == null) {
-            onSuccessResultInitial(single.blockingGet(), null, null, params, callback)
+            onSuccessResultInitial(single.blockingGetWithoutWrap(), null, null, params, callback)
         } else {
             disposable.add(
                 single.subscribeOn(scheduler)

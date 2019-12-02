@@ -1,6 +1,7 @@
 package by.shostko.statushandler.paging.itemkeyed
 
 import by.shostko.statushandler.StatusHandler
+import by.shostko.statushandler.paging.blockingGetWithoutWrap
 import io.reactivex.Scheduler
 import io.reactivex.Single
 import io.reactivex.disposables.CompositeDisposable
@@ -20,7 +21,7 @@ abstract class RxItemKeyedDataSource<K, V>(
     final override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<V>) {
         val single = onLoadInitial(params.requestedInitialKey, params.requestedLoadSize)
         if (scheduler == null) {
-            onSuccessResult(single.blockingGet(), params, callback)
+            onSuccessResult(single.blockingGetWithoutWrap(), params, callback)
         } else {
             disposable.add(
                 single.subscribeOn(scheduler)
@@ -37,7 +38,7 @@ abstract class RxItemKeyedDataSource<K, V>(
     final override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<V>) {
         val single = onLoadAfter(params.key, params.requestedLoadSize)
         if (scheduler == null) {
-            onSuccessResult(single.blockingGet(), params, callback)
+            onSuccessResult(single.blockingGetWithoutWrap(), params, callback)
         } else {
             disposable.add(
                 single.subscribeOn(scheduler)
@@ -54,7 +55,7 @@ abstract class RxItemKeyedDataSource<K, V>(
     final override fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<V>) {
         val single = onLoadBefore(params.key, params.requestedLoadSize)
         if (scheduler == null) {
-            onSuccessResult(single.blockingGet(), params, callback)
+            onSuccessResult(single.blockingGetWithoutWrap(), params, callback)
         } else {
             disposable.add(
                 single.subscribeOn(scheduler)

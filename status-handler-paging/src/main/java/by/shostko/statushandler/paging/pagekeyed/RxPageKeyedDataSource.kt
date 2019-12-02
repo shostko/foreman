@@ -1,6 +1,7 @@
 package by.shostko.statushandler.paging.pagekeyed
 
 import by.shostko.statushandler.StatusHandler
+import by.shostko.statushandler.paging.blockingGetWithoutWrap
 import io.reactivex.Scheduler
 import io.reactivex.Single
 import io.reactivex.disposables.CompositeDisposable
@@ -21,7 +22,7 @@ abstract class RxPageKeyedDataSource<K, V>(
     override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<K, V>) {
         val single = onLoad(firstPageKey, params.requestedLoadSize)
         if (scheduler == null) {
-            val result = single.blockingGet()
+            val result = single.blockingGetWithoutWrap()
             val previousPageKey = prevKey(firstPageKey)
             val nextPageKey = nextKey(firstPageKey)
             onSuccessResultInitial(result, previousPageKey, nextPageKey, params, callback)
@@ -43,7 +44,7 @@ abstract class RxPageKeyedDataSource<K, V>(
     override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<K, V>) {
         val single = onLoad(params.key, params.requestedLoadSize)
         if (scheduler == null) {
-            val result = single.blockingGet()
+            val result = single.blockingGetWithoutWrap()
             val nextPageKey = nextKey(params.key)
             onSuccessResultAfter(result, nextPageKey, params, callback)
         } else {
@@ -63,7 +64,7 @@ abstract class RxPageKeyedDataSource<K, V>(
     override fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<K, V>) {
         val single = onLoad(params.key, params.requestedLoadSize)
         if (scheduler == null) {
-            val result = single.blockingGet()
+            val result = single.blockingGetWithoutWrap()
             val previousPageKey = prevKey(params.key)
             onSuccessResultBefore(result, previousPageKey, params, callback)
         } else {
