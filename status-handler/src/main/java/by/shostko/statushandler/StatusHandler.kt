@@ -1,4 +1,4 @@
-@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+@file:Suppress("unused", "MemberVisibilityCanBePrivate", "RedundantLambdaArrow")
 
 package by.shostko.statushandler
 
@@ -14,27 +14,71 @@ enum class Action {
     RETRY
 }
 
-class StatusHandler<E>(private val factory: Status.Factory<E>) {
+abstract class StatusHandler<E> {
+
+    abstract val status: Flowable<Status<E>>
+    abstract val action: Flowable<Action>
+
+    abstract fun proceed()
+    abstract fun refresh()
+    abstract fun retry()
+
+    abstract fun updateWorking()
+    abstract fun updateWorkingForward()
+    abstract fun updateWorkingBackward()
+    abstract fun updateFailed(throwable: Throwable)
+    abstract fun updateFailed(map: Map<String, Any>)
+    abstract fun updateSuccess()
+
+    fun <T> wrapFlowableRequest(callable: () -> Flowable<T>): Flowable<T> = wrapFlowableRequest(null, callable)
+    abstract fun <T> wrapFlowableRequest(errorItem: T?, callable: () -> Flowable<T>): Flowable<T>
+    fun <T> prepareFlowableRequest(callable: () -> Flowable<T>): Flowable<T> = prepareFlowableRequest(null, callable)
+    abstract fun <T> prepareFlowableRequest(errorItem: T?, callable: () -> Flowable<T>): Flowable<T>
+
+    fun <T> wrapObservableRequest(callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(null, callable.toFlowable())
+    fun <T> wrapObservableRequest(errorItem: T?, callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(errorItem, callable.toFlowable())
+    fun <T> prepareObservableRequest(callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(null, callable.toFlowable())
+    fun <T> prepareObservableRequest(errorItem: T?, callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(errorItem, callable.toFlowable())
+
+    fun <T> wrapSingleRequest(callable: () -> Single<T>): Flowable<T> = wrapSingleRequest(null, callable)
+    abstract fun <T> wrapSingleRequest(errorItem: T?, callable: () -> Single<T>): Flowable<T>
+    fun <T> prepareSingleRequest(callable: () -> Single<T>): Flowable<T> = prepareSingleRequest(null, callable)
+    abstract fun <T> prepareSingleRequest(errorItem: T?, callable: () -> Single<T>): Flowable<T>
+
+    abstract fun wrapCompletableRequest(callable: () -> Completable): Flowable<Unit>
+    abstract fun prepareCompletableRequest(callable: () -> Completable): Flowable<Unit>
+
+    fun <T> wrapCallableRequest(callable: () -> T): Flowable<T> = wrapSingleRequest(null) { Single.fromCallable(callable) }
+    fun <T> wrapCallableRequest(errorItem: T?, callable: () -> T): Flowable<T> = wrapSingleRequest(errorItem) { Single.fromCallable(callable) }
+    fun <T> prepareCallableRequest(callable: () -> T): Flowable<T> = prepareSingleRequest(null) { Single.fromCallable(callable) }
+    fun <T> prepareCallableRequest(errorItem: T?, callable: () -> T): Flowable<T> = prepareSingleRequest(errorItem) { Single.fromCallable(callable) }
+    fun wrapActionRequest(action: () -> Unit): Flowable<Unit> = wrapCompletableRequest { Completable.fromAction(action) }
+    fun prepareActionRequest(action: () -> Unit): Flowable<Unit> = prepareCompletableRequest { Completable.fromAction(action) }
+
+    protected fun <T> (() -> Observable<T>).toFlowable(): (() -> Flowable<T>) = { this().toFlowable(BackpressureStrategy.LATEST) }
+}
+
+class StatusHandlerImpl<E>(private val factory: Status.Factory<E>) : StatusHandler<E>() {
 
     private val statusProcessor: FlowableProcessor<Status<E>> = BehaviorProcessor.createDefault(factory.createInitial())
 
     private val actionProcessor: FlowableProcessor<Action> = PublishProcessor.create()
 
-    val status: Flowable<Status<E>> = statusProcessor.hide()
+    override val status: Flowable<Status<E>> = statusProcessor.hide()
 
-    val action: Flowable<Action> = actionProcessor.hide()
+    override val action: Flowable<Action> = actionProcessor.hide()
 
     // region action
 
-    fun proceed() {
+    override fun proceed() {
         actionProcessor.onNext(Action.PROCEED)
     }
 
-    fun refresh() {
+    override fun refresh() {
         actionProcessor.onNext(Action.REFRESH)
     }
 
-    fun retry() {
+    override fun retry() {
         actionProcessor.onNext(Action.RETRY)
     }
 
@@ -42,25 +86,23 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
 
     // region status
 
-    fun updateWorking() = statusProcessor.onNext(factory.createWorking(Direction.FULL))
+    override fun updateWorking() = statusProcessor.onNext(factory.createWorking(Direction.FULL))
 
-    fun updateWorkingForward() = statusProcessor.onNext(factory.createWorking(Direction.FORWARD))
+    override fun updateWorkingForward() = statusProcessor.onNext(factory.createWorking(Direction.FORWARD))
 
-    fun updateWorkingBackward() = statusProcessor.onNext(factory.createWorking(Direction.BACKWARD))
+    override fun updateWorkingBackward() = statusProcessor.onNext(factory.createWorking(Direction.BACKWARD))
 
-    fun updateFailed(throwable: Throwable) = statusProcessor.onNext(factory.createFailed(throwable))
+    override fun updateFailed(throwable: Throwable) = statusProcessor.onNext(factory.createFailed(throwable))
 
-    fun updateFailed(map: Map<String, Any>) = statusProcessor.onNext(factory.createFailed(map))
+    override fun updateFailed(map: Map<String, Any>) = statusProcessor.onNext(factory.createFailed(map))
 
-    fun updateSuccess() = statusProcessor.onNext(factory.createSuccess())
+    override fun updateSuccess() = statusProcessor.onNext(factory.createSuccess())
 
     //endregion
 
     // region Flowable
 
-    fun <T> wrapFlowableRequest(callable: () -> Flowable<T>): Flowable<T> = wrapFlowableRequest(null, callable)
-
-    fun <T> wrapFlowableRequest(errorItem: T?, callable: () -> Flowable<T>): Flowable<T> =
+    override fun <T> wrapFlowableRequest(errorItem: T?, callable: () -> Flowable<T>): Flowable<T> =
         action.startWith(Action.PROCEED)
             .doOnNext { updateWorking() }
             .switchMap {
@@ -68,42 +110,24 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
                     .subscribeOn(Schedulers.io())
                     .doOnNext { updateSuccess() }
                     .doOnError { updateFailed(it) }
-                    .onErrorResumeNext { th: Throwable -> if (errorItem == null) Flowable.never() else Flowable.just(errorItem) }
+                    .onErrorResumeNext { _: Throwable -> if (errorItem == null) Flowable.never() else Flowable.just(errorItem) }
             }
 
-    fun <T> prepareFlowableRequest(callable: () -> Flowable<T>): Flowable<T> = prepareFlowableRequest(null, callable)
-
-    fun <T> prepareFlowableRequest(errorItem: T?, callable: () -> Flowable<T>): Flowable<T> =
+    override fun <T> prepareFlowableRequest(errorItem: T?, callable: () -> Flowable<T>): Flowable<T> =
         action.doOnNext { updateWorking() }
             .switchMap {
                 Flowable.defer(callable)
                     .subscribeOn(Schedulers.io())
                     .doOnNext { updateSuccess() }
                     .doOnError { updateFailed(it) }
-                    .onErrorResumeNext { th: Throwable -> if (errorItem == null) Flowable.never() else Flowable.just(errorItem) }
+                    .onErrorResumeNext { _: Throwable -> if (errorItem == null) Flowable.never() else Flowable.just(errorItem) }
             }
-
-    // endregion
-
-    // region Observable
-
-    private fun <T> (() -> Observable<T>).toFlowable(): (() -> Flowable<T>) = { this().toFlowable(BackpressureStrategy.LATEST) }
-
-    fun <T> wrapObservableRequest(callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(null, callable.toFlowable())
-
-    fun <T> wrapObservableRequest(errorItem: T?, callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(errorItem, callable.toFlowable())
-
-    fun <T> prepareObservableRequest(callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(null, callable.toFlowable())
-
-    fun <T> prepareObservableRequest(errorItem: T?, callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(errorItem, callable.toFlowable())
 
     // endregion
 
     // region Single
 
-    fun <T> wrapSingleRequest(callable: () -> Single<T>): Flowable<T> = wrapSingleRequest(null, callable)
-
-    fun <T> wrapSingleRequest(errorItem: T?, callable: () -> Single<T>): Flowable<T> =
+    override fun <T> wrapSingleRequest(errorItem: T?, callable: () -> Single<T>): Flowable<T> =
         action.startWith(Action.PROCEED)
             .doOnNext { updateWorking() }
             .switchMapSingle {
@@ -114,9 +138,7 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
                     .onErrorResumeNext { if (errorItem == null) Single.never() else Single.just(errorItem) }
             }
 
-    fun <T> prepareSingleRequest(callable: () -> Single<T>): Flowable<T> = prepareSingleRequest(null, callable)
-
-    fun <T> prepareSingleRequest(errorItem: T?, callable: () -> Single<T>): Flowable<T> =
+    override fun <T> prepareSingleRequest(errorItem: T?, callable: () -> Single<T>): Flowable<T> =
         action.doOnNext { updateWorking() }
             .switchMapSingle {
                 Single.defer(callable)
@@ -130,7 +152,7 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
 
     // region Completable
 
-    fun wrapCompletableRequest(callable: () -> Completable): Flowable<Unit> =
+    override fun wrapCompletableRequest(callable: () -> Completable): Flowable<Unit> =
         action.startWith(Action.PROCEED)
             .doOnNext { updateWorking() }
             .switchMapSingle {
@@ -142,7 +164,7 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
                     .toSingleDefault(Unit)
             }
 
-    fun prepareCompletableRequest(callable: () -> Completable): Flowable<Unit> =
+    override fun prepareCompletableRequest(callable: () -> Completable): Flowable<Unit> =
         action.doOnNext { updateWorking() }
             .switchMapSingle {
                 Completable.defer(callable)
@@ -152,22 +174,6 @@ class StatusHandler<E>(private val factory: Status.Factory<E>) {
                     .onErrorResumeNext { Completable.never() }
                     .toSingleDefault(Unit)
             }
-
-    // endregion
-
-    // region Not Reactive
-
-    fun <T> wrapCallableRequest(callable: () -> T): Flowable<T> = wrapSingleRequest(null) { Single.fromCallable(callable) }
-
-    fun <T> wrapCallableRequest(errorItem: T?, callable: () -> T): Flowable<T> = wrapSingleRequest(errorItem) { Single.fromCallable(callable) }
-
-    fun <T> prepareCallableRequest(callable: () -> T): Flowable<T> = prepareSingleRequest(null) { Single.fromCallable(callable) }
-
-    fun <T> prepareCallableRequest(errorItem: T?, callable: () -> T): Flowable<T> = prepareSingleRequest(errorItem) { Single.fromCallable(callable) }
-
-    fun wrapActionRequest(action: () -> Unit): Flowable<Unit> = wrapCompletableRequest { Completable.fromAction(action) }
-
-    fun prepareActionRequest(action: () -> Unit): Flowable<Unit> = prepareCompletableRequest { Completable.fromAction(action) }
 
     // endregion
 }
