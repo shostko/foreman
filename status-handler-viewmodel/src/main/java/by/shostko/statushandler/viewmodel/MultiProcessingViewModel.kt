@@ -8,8 +8,6 @@ import io.reactivex.Flowable
 
 abstract class MultiProcessingViewModel<E>(private val noError: E, factory: Status.Factory<E>?) : CustomViewModel<E>(noError, factory) {
 
-    private val wrapper by lazy { StatusHandlerWrapper<E>() }
-
     private val registry: MutableMap<Any, StatusDelegate<E>> = HashMap()
 
     private fun delegate(key: Any): StatusDelegate<E> = registry[key] ?: synchronized(registry) {
@@ -23,7 +21,7 @@ abstract class MultiProcessingViewModel<E>(private val noError: E, factory: Stat
 
     protected fun statusHandler(key: Any) = delegate(key).statusHandler
 
-    override fun createBaseStatusHandler(factory: Status.Factory<E>): StatusHandler<E> = wrapper
+    override fun createBaseStatusHandler(factory: Status.Factory<E>): StatusHandler<E> = StatusHandlerWrapper()
 
     fun proceed(key: Any) = delegate(key).proceed()
 
