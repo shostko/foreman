@@ -17,17 +17,21 @@ class StatusHandlerWrapper<E> : StatusHandler<E>() {
 
     override val status: Flowable<Status<E>> = handlers.map { set -> set.map { it.status } }
         .switchMap { statusFlowables ->
-            Flowable.combineLatest(statusFlowables.toTypedArray()) { arr ->
-                val statuses = arr.mapNotNull { it as? Status<E> }
-                val failed = statuses.firstOrNull { it.isFailed() }
-                val working = statuses.firstOrNull { it.isWorking() }
-                return@combineLatest when {
-                    failed == null && working == null -> SimpleStatus<E>(Direction.NONE, null, null)
-                    failed != null && working != null -> SimpleStatus(working.direction, failed.throwable, failed.error)
-                    failed != null && working == null -> SimpleStatus(Direction.NONE, failed.throwable, failed.error)
-                    failed == null && working != null -> SimpleStatus<E>(working.direction, null, null)
-                    else -> throw IllegalStateException("Should never be thrown!")
-                } as Status<E>
+            when (statusFlowables.size) {
+                0 -> Flowable.never()
+                1 -> statusFlowables.first()
+                else -> Flowable.combineLatest(statusFlowables.toTypedArray()) { arr ->
+                    val statuses = arr.mapNotNull { it as? Status<E> }
+                    val failed = statuses.firstOrNull { it.isFailed() }
+                    val working = statuses.firstOrNull { it.isWorking() }
+                    return@combineLatest when {
+                        failed == null && working == null -> SimpleStatus<E>(Direction.NONE, null, null)
+                        failed != null && working != null -> SimpleStatus(working.direction, failed.throwable, failed.error)
+                        failed != null && working == null -> SimpleStatus(Direction.NONE, failed.throwable, failed.error)
+                        failed == null && working != null -> SimpleStatus<E>(working.direction, null, null)
+                        else -> throw IllegalStateException("Should never be thrown!")
+                    } as Status<E>
+                }
             }
         }.distinctUntilChanged()
 
