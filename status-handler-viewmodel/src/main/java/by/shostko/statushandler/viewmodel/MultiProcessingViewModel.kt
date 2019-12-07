@@ -12,10 +12,11 @@ abstract class MultiProcessingViewModel<E>(private val noError: E, factory: Stat
 
     private fun delegate(key: Any): StatusDelegate<E> = registry[key] ?: synchronized(registry) {
         registry[key] ?: run {
-            val statusHandler = StatusHandlerImpl(requireFactory())
-            val statusDelegate = StatusDelegate(noError, statusHandler)
-            registry[key] = statusDelegate
-            statusDelegate
+            val handler = StatusHandlerImpl(requireFactory())
+            val delegate = StatusDelegate(noError, handler)
+            (statusHandler as StatusHandlerWrapper<E>).wrap(handler)
+            registry[key] = delegate
+            delegate
         }
     }
 
