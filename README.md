@@ -45,8 +45,8 @@ dependencies {
     annotationProcessor 'androidx.lifecycle:lifecycle-compiler:2.+'' // use kapt for kotlin
     
     // for worker module
-    implementation 'android.arch.work:work-runtime-ktx:1.+'
-    implementation 'android.arch.work:work-rxjava2:1.+'
+    implementation 'androidx.work:work-runtime-ktx:2.+'
+    implementation 'androidx.work:work-rxjava2:2.+'
 }
 ```
 
