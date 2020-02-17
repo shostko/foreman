@@ -2,6 +2,7 @@ package by.shostko.statushandler
 
 import io.reactivex.Completable
 import io.reactivex.Flowable
+import io.reactivex.Maybe
 import io.reactivex.Single
 import io.reactivex.processors.FlowableProcessor
 import io.reactivex.processors.ReplayProcessor
@@ -81,6 +82,12 @@ class StatusHandlerWrapper<E> : StatusHandler<E>() {
 
     override fun <T> prepareSingleRequest(errorItem: T?, callable: () -> Single<T>): Flowable<T> =
         throw UnsupportedOperationException("Wrapper can't handle prepareSingleRequest method")
+
+    override fun <T> wrapMaybeRequest(errorItem: T?, callable: () -> Maybe<T>): Flowable<T> =
+        throw UnsupportedOperationException("Wrapper can't handle wrapMaybeRequest method")
+
+    override fun <T> prepareMaybeRequest(errorItem: T?, callable: () -> Maybe<T>): Flowable<T>  =
+        throw UnsupportedOperationException("Wrapper can't handle prepareMaybeRequest method")
 
     override fun wrapCompletableRequest(callable: () -> Completable): Flowable<Unit> =
         throw UnsupportedOperationException("Wrapper can't handle wrapCompletableRequest method")

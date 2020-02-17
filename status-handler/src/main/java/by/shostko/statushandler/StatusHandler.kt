@@ -45,6 +45,11 @@ abstract class StatusHandler<E> {
     fun <T> prepareSingleRequest(callable: () -> Single<T>): Flowable<T> = prepareSingleRequest(null, callable)
     abstract fun <T> prepareSingleRequest(errorItem: T?, callable: () -> Single<T>): Flowable<T>
 
+    fun <T> wrapMaybeRequest(callable: () -> Maybe<T>): Flowable<T> = wrapMaybeRequest(null, callable)
+    abstract fun <T> wrapMaybeRequest(errorItem: T?, callable: () -> Maybe<T>): Flowable<T>
+    fun <T> prepareMaybeRequest(callable: () -> Maybe<T>): Flowable<T> = prepareMaybeRequest(null, callable)
+    abstract fun <T> prepareMaybeRequest(errorItem: T?, callable: () -> Maybe<T>): Flowable<T>
+
     abstract fun wrapCompletableRequest(callable: () -> Completable): Flowable<Unit>
     abstract fun prepareCompletableRequest(callable: () -> Completable): Flowable<Unit>
 
@@ -110,6 +115,7 @@ class StatusHandlerImpl<E>(private val factory: Status.Factory<E>) : StatusHandl
                     .subscribeOn(Schedulers.io())
                     .doOnNext { updateSuccess() }
                     .doOnError { updateFailed(it) }
+                    .doOnComplete { updateSuccess() }
                     .onErrorResumeNext { _: Throwable -> if (errorItem == null) Flowable.never() else Flowable.just(errorItem) }
             }
 
@@ -120,6 +126,7 @@ class StatusHandlerImpl<E>(private val factory: Status.Factory<E>) : StatusHandl
                     .subscribeOn(Schedulers.io())
                     .doOnNext { updateSuccess() }
                     .doOnError { updateFailed(it) }
+                    .doOnComplete { updateSuccess() }
                     .onErrorResumeNext { _: Throwable -> if (errorItem == null) Flowable.never() else Flowable.just(errorItem) }
             }
 
@@ -146,6 +153,33 @@ class StatusHandlerImpl<E>(private val factory: Status.Factory<E>) : StatusHandl
                     .doOnSuccess { updateSuccess() }
                     .doOnError { updateFailed(it) }
                     .onErrorResumeNext { if (errorItem == null) Single.never() else Single.just(errorItem) }
+            }
+
+    // endregion
+
+    // region Maybe
+
+    override fun <T> wrapMaybeRequest(errorItem: T?, callable: () -> Maybe<T>): Flowable<T> =
+        action.startWith(Action.PROCEED)
+            .doOnNext { updateWorking() }
+            .switchMapMaybe {
+                Maybe.defer(callable)
+                    .subscribeOn(Schedulers.io())
+                    .doOnSuccess { updateSuccess() }
+                    .doOnError { updateFailed(it) }
+                    .doOnComplete { updateSuccess() }
+                    .onErrorResumeNext(if (errorItem == null) Maybe.never() else Maybe.just(errorItem))
+            }
+
+    override fun <T> prepareMaybeRequest(errorItem: T?, callable: () -> Maybe<T>): Flowable<T> =
+        action.doOnNext { updateWorking() }
+            .switchMapMaybe {
+                Maybe.defer(callable)
+                    .subscribeOn(Schedulers.io())
+                    .doOnSuccess { updateSuccess() }
+                    .doOnError { updateFailed(it) }
+                    .doOnComplete { updateSuccess() }
+                    .onErrorResumeNext(if (errorItem == null) Maybe.never() else Maybe.just(errorItem))
             }
 
     // endregion
