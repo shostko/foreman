@@ -13,6 +13,7 @@ abstract class BasePositionalDataSource<V>(
 
     protected open val tag: String = javaClass.simpleName
 
+    private var anchor: Int? = null
     private var retryFunction: (() -> Any)? = null
 
     init {
@@ -43,7 +44,13 @@ abstract class BasePositionalDataSource<V>(
 
     final override fun loadRange(params: LoadRangeParams, callback: LoadRangeCallback<V>) {
         Timber.tag(tag).d("loadRange for %s", params.asString())
-        statusHandler.updateWorking()
+        anchor.let { anchor ->
+            when {
+                anchor == null -> statusHandler.updateWorking()
+                anchor < params.startPosition -> statusHandler.updateWorkingForward()
+                else -> statusHandler.updateWorkingBackward()
+            }
+        }
         try {
             onLoadRange(params, callback)
         } catch (e: Throwable) {
@@ -65,6 +72,7 @@ abstract class BasePositionalDataSource<V>(
                 "onSuccessResult %d (frontPosition=%d, totalCount=%d) items for %s",
                 list.size, frontPosition, totalCount, params.asString()
             )
+            anchor = frontPosition + list.size - 1
             retryFunction = null
             statusHandler.updateSuccess()
             callback.onResult(list, frontPosition, totalCount)
@@ -82,6 +90,7 @@ abstract class BasePositionalDataSource<V>(
                 "onSuccessResult %d (frontPosition=%d) items for %s",
                 list.size, frontPosition, params.asString()
             )
+            anchor = frontPosition + list.size - 1
             retryFunction = null
             statusHandler.updateSuccess()
             callback.onResult(list, frontPosition)
@@ -95,6 +104,7 @@ abstract class BasePositionalDataSource<V>(
     ) {
         if (!isInvalid) {
             Timber.tag(tag).d("onSuccessResult %d items for %s", list.size, params.asString())
+            anchor = params.requestedStartPosition + list.size - 1
             retryFunction = null
             statusHandler.updateSuccess()
             callback.onResult(list, params.requestedStartPosition)
@@ -108,6 +118,7 @@ abstract class BasePositionalDataSource<V>(
     ) {
         if (!isInvalid) {
             Timber.tag(tag).d("onSuccessResult %d items for %s", list.size, params.asString())
+            anchor = params.startPosition + list.size - 1
             retryFunction = null
             statusHandler.updateSuccess()
             callback.onResult(list)
