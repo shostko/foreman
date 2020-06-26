@@ -1,0 +1,122 @@
+@file:Suppress("unused")
+
+package by.shostko.statushandler.v2.rx
+
+import by.shostko.statushandler.v2.*
+import io.reactivex.Completable
+import io.reactivex.Flowable
+import io.reactivex.Scheduler
+import io.reactivex.disposables.Disposable
+import io.reactivex.processors.FlowableProcessor
+import io.reactivex.processors.PublishProcessor
+import io.reactivex.schedulers.Schedulers
+
+internal abstract class BaseCompletableStatusHandler<P : Any?>(
+    private val scheduler: Scheduler,
+    private val func: (P) -> Completable
+) : BaseStatusHandler() {
+
+    protected abstract val actionFlowable: Flowable<Optional<P>>
+
+    private val resultFlowable: Flowable<Unit> by lazy {
+        actionFlowable
+            .doOnNext { working() }
+            .switchMapSingle { param ->
+                Completable.defer { func(param.value) }
+                    .subscribeOn(scheduler)
+                    .doOnComplete { success() }
+                    .doOnError { failed(it) }
+                    .onErrorResumeNext { Completable.never() }
+                    .toSingleDefault(Unit)
+            }
+            .share()
+    }
+
+    private var disposabe: Disposable? = null
+
+    private fun subscribe() {
+        disposabe = resultFlowable.subscribe()
+    }
+
+    private fun dispose() {
+        disposabe?.dispose()
+    }
+
+    override fun addOnStatusListener(listener: StatusHandler.OnStatusListener) {
+        val sizeBefore = onStatusListeners.size
+        super.addOnStatusListener(listener)
+        if (sizeBefore == 0 && onStatusListeners.size > 0) {
+            subscribe()
+        }
+    }
+
+    override fun removeOnStatusListener(listener: StatusHandler.OnStatusListener) {
+        val sizeBefore = onStatusListeners.size
+        super.removeOnStatusListener(listener)
+        if (sizeBefore > 0 && onStatusListeners.size == 0) {
+            dispose()
+        }
+    }
+}
+
+internal class WrappedCompletableStatusHandler(
+    scheduler: Scheduler,
+    func: () -> Completable
+) : BaseCompletableStatusHandler<Unit>(scheduler, { func() }),
+    WrappedStatusHandler {
+
+    private val actionProcessor: FlowableProcessor<Unit> = PublishProcessor.create()
+
+    override val actionFlowable: Flowable<Optional<Unit>> = actionProcessor.startWith(Unit).map { Optional(it) }
+
+    override fun refresh() {
+        actionProcessor.onNext(Unit)
+    }
+
+    override fun retry() = refresh()
+}
+
+internal class PreparedCompletableStatusHandler(
+    scheduler: Scheduler,
+    func: () -> Completable
+) : BaseCompletableStatusHandler<Unit>(scheduler, { func() }),
+    PreparedStatusHandler {
+
+    private val actionProcessor: FlowableProcessor<Unit> = PublishProcessor.create()
+
+    override val actionFlowable: Flowable<Optional<Unit>> = actionProcessor.map { Optional(it) }
+
+    override fun proceed() {
+        actionProcessor.onNext(Unit)
+    }
+}
+
+internal class AwaitCompletableStatusHandler<P : Any?>(
+    scheduler: Scheduler,
+    func: (P) -> Completable
+) : BaseCompletableStatusHandler<P>(scheduler, func),
+    AwaitStatusHandler<P> {
+
+    private val actionProcessor: FlowableProcessor<Optional<P>> = PublishProcessor.create()
+
+    override val actionFlowable: Flowable<Optional<P>> = actionProcessor.hide()
+
+    override fun proceed(param: P) {
+        actionProcessor.onNext(Optional(param))
+    }
+}
+
+fun StatusHandler.Companion.wrapCompletable(
+    scheduler: Scheduler = Schedulers.io(),
+    func: () -> Completable
+): WrappedStatusHandler = WrappedCompletableStatusHandler(scheduler, func)
+
+fun StatusHandler.Companion.prepareCompletable(
+    scheduler: Scheduler = Schedulers.io(),
+    func: () -> Completable
+): PreparedStatusHandler = PreparedCompletableStatusHandler(scheduler, func)
+
+fun <P : Any?> StatusHandler.Companion.awaitCompletable(
+    scheduler: Scheduler = Schedulers.io(),
+    func: (P) -> Completable
+): AwaitStatusHandler<P> = AwaitCompletableStatusHandler(scheduler, func)

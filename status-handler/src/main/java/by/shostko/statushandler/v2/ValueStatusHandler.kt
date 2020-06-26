@@ -1,0 +1,93 @@
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+
+package by.shostko.statushandler.v2
+
+import android.os.Handler
+import android.os.Looper
+import java.util.*
+
+interface ValueStatusHandler<V : Any> : StatusHandler {
+
+    val value: V?
+
+    fun addOnValueListener(listener: OnValueListener<V>)
+    fun removeOnValueListener(listener: OnValueListener<V>)
+
+    interface OnValueListener<V> {
+        fun onValue(value: V)
+    }
+
+    interface Callback<V> : StatusHandler.Callback {
+        fun value(value: V)
+    }
+}
+
+fun <V : Any> StatusHandler.Companion.wrap(func: (ValueStatusHandler.Callback<V>) -> Unit): WrappedValueStatusHandler<V> = WrappedValueStatusHandlerImpl(func)
+fun <V : Any> StatusHandler.Companion.prepare(func: (ValueStatusHandler.Callback<V>) -> Unit): PreparedValueStatusHandler<V> = PreparedValueStatusHandlerImpl(func)
+fun <P : Any?, V : Any> StatusHandler.Companion.await(func: (P, ValueStatusHandler.Callback<V>) -> Unit): AwaitValueStatusHandler<P, V> = AwaitValueStatusHandlerImpl(func)
+
+interface WrappedValueStatusHandler<V : Any> : ValueStatusHandler<V>, WrappedStatusHandler
+
+interface PreparedValueStatusHandler<V : Any> : ValueStatusHandler<V>, PreparedStatusHandler
+
+interface AwaitValueStatusHandler<P : Any?, V : Any> : ValueStatusHandler<V>, AwaitStatusHandler<P>
+
+internal abstract class BaseValueStatusHandler<V : Any> : BaseStatusHandler(), ValueStatusHandler<V>, ValueStatusHandler.Callback<V> {
+
+    final override var value: V? = null
+        private set(value) {
+            if (field != value && value != null) {
+                field = value
+                onValueListeners.forEach { it.onValue(value) } // TODO synchronize
+            }
+        }
+
+    protected val onValueListeners: MutableSet<ValueStatusHandler.OnValueListener<V>> = Collections.newSetFromMap(WeakHashMap())
+
+    override fun addOnValueListener(listener: ValueStatusHandler.OnValueListener<V>) {
+        onValueListeners.add(listener)
+    }
+
+    override fun removeOnValueListener(listener: ValueStatusHandler.OnValueListener<V>) {
+        onValueListeners.remove(listener)
+    }
+
+    override fun value(value: V) {
+        this.value = value
+    }
+}
+
+internal class WrappedValueStatusHandlerImpl<V : Any>(
+    private val func: (ValueStatusHandler.Callback<V>) -> Unit
+) : BaseValueStatusHandler<V>(), WrappedValueStatusHandler<V> {
+
+    init {
+        Handler(Looper.getMainLooper()).post {
+            refresh()
+        }
+    }
+
+    override fun refresh() {
+        func(this)
+    }
+
+    override fun retry() = refresh()
+}
+
+internal class PreparedValueStatusHandlerImpl<V : Any>(
+    private val func: (ValueStatusHandler.Callback<V>) -> Unit
+) : BaseValueStatusHandler<V>(), PreparedValueStatusHandler<V> {
+
+    override fun proceed() {
+        func(this)
+    }
+}
+
+internal class AwaitValueStatusHandlerImpl<P : Any?, V : Any>(
+    private val func: (P, ValueStatusHandler.Callback<V>) -> Unit
+) : BaseValueStatusHandler<V>(), AwaitValueStatusHandler<P, V> {
+
+    override fun proceed(param: P) {
+        func(param, this)
+    }
+}
