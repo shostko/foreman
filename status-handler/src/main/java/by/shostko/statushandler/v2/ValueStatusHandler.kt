@@ -6,7 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import java.util.*
 
-interface ValueStatusHandler<V : Any> : StatusHandler {
+interface ValueHandler<V : Any> {
 
     val value: V?
 
@@ -17,9 +17,13 @@ interface ValueStatusHandler<V : Any> : StatusHandler {
         fun onValue(value: V)
     }
 
-    interface Callback<V> : StatusHandler.Callback {
+    interface Callback<V> {
         fun value(value: V)
     }
+}
+
+interface ValueStatusHandler<V : Any> : StatusHandler, ValueHandler<V> {
+    interface Callback<V> : StatusHandler.Callback, ValueHandler.Callback<V>
 }
 
 fun <V : Any> StatusHandler.Companion.wrap(func: (ValueStatusHandler.Callback<V>) -> Unit): WrappedValueStatusHandler<V> = WrappedValueStatusHandlerImpl(func)
@@ -42,13 +46,13 @@ internal abstract class BaseValueStatusHandler<V : Any> : BaseStatusHandler(), V
             }
         }
 
-    protected val onValueListeners: MutableSet<ValueStatusHandler.OnValueListener<V>> = Collections.newSetFromMap(WeakHashMap())
+    protected val onValueListeners: MutableSet<ValueHandler.OnValueListener<V>> = Collections.newSetFromMap(WeakHashMap())
 
-    override fun addOnValueListener(listener: ValueStatusHandler.OnValueListener<V>) {
+    override fun addOnValueListener(listener: ValueHandler.OnValueListener<V>) {
         onValueListeners.add(listener)
     }
 
-    override fun removeOnValueListener(listener: ValueStatusHandler.OnValueListener<V>) {
+    override fun removeOnValueListener(listener: ValueHandler.OnValueListener<V>) {
         onValueListeners.remove(listener)
     }
 

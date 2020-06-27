@@ -18,18 +18,16 @@ internal abstract class BaseCompletableStatusHandler<P : Any?>(
 
     protected abstract val actionFlowable: Flowable<Optional<P>>
 
-    private val resultFlowable: Flowable<Unit> by lazy {
+    private val resultFlowable: Completable by lazy {
         actionFlowable
             .doOnNext { working() }
-            .switchMapSingle { param ->
+            .switchMapCompletable { param ->
                 Completable.defer { func(param.value) }
                     .subscribeOn(scheduler)
                     .doOnComplete { success() }
                     .doOnError { failed(it) }
-                    .onErrorResumeNext { Completable.never() }
-                    .toSingleDefault(Unit)
+                    .onErrorResumeNext { Completable.complete() }
             }
-            .share()
     }
 
     private var disposabe: Disposable? = null
@@ -67,7 +65,7 @@ internal class WrappedCompletableStatusHandler(
 
     private val actionProcessor: FlowableProcessor<Unit> = PublishProcessor.create()
 
-    override val actionFlowable: Flowable<Optional<Unit>> = actionProcessor.startWith(Unit).map { Optional(it) }
+    override val actionFlowable: Flowable<Optional<Unit>> = actionProcessor.startOnce(Unit).map { Optional(it) }
 
     override fun refresh() {
         actionProcessor.onNext(Unit)

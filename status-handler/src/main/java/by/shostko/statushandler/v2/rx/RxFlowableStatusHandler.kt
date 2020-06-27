@@ -1,4 +1,4 @@
-@file:Suppress("unused")
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
 
 package by.shostko.statushandler.v2.rx
 
@@ -8,18 +8,19 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.processors.FlowableProcessor
 import io.reactivex.processors.PublishProcessor
 import io.reactivex.schedulers.Schedulers
+import java.util.concurrent.atomic.AtomicBoolean
 
 internal abstract class BaseFlowableStatusHandler<P : Any?, V : Any>(
-    private val scheduler: Scheduler,
+    private val scheduler: Scheduler, // TODO think about second scheduler
     private val func: (P) -> Flowable<V>
 ) : BaseValueStatusHandler<V>() {
 
     protected abstract val actionFlowable: Flowable<Optional<P>>
 
-    private val resultFlowable: Completable by lazy {
+    internal val valueFlowable: Flowable<V> by lazy {
         actionFlowable
             .doOnNext { working() }
-            .switchMapCompletable { param ->
+            .switchMap { param ->
                 Flowable.defer { func(param.value) }
                     .subscribeOn(scheduler)
                     .doOnNext {
@@ -28,16 +29,18 @@ internal abstract class BaseFlowableStatusHandler<P : Any?, V : Any>(
                     }
                     .onErrorResumeNext { th: Throwable ->
                         failed(th)
-                        Flowable.never()
+                        Flowable.empty()
                     }
-                    .ignoreElements()
             }
+            .share()
     }
+
+    private val resultCompletable: Completable by lazy { valueFlowable.ignoreElements() }
 
     private var disposabe: Disposable? = null
 
     private fun subscribe() {
-        disposabe = resultFlowable.subscribe()
+        disposabe = resultCompletable.subscribe()
     }
 
     private fun dispose() {
@@ -47,7 +50,7 @@ internal abstract class BaseFlowableStatusHandler<P : Any?, V : Any>(
     override fun addOnStatusListener(listener: StatusHandler.OnStatusListener) {
         val sizeBefore = onStatusListeners.size
         super.addOnStatusListener(listener)
-        if (sizeBefore == 0 && onStatusListeners.size > 0) {
+        if (sizeBefore == 0 && onStatusListeners.size > 0 && onValueListeners.size == 0) {
             subscribe()
         }
     }
@@ -55,7 +58,23 @@ internal abstract class BaseFlowableStatusHandler<P : Any?, V : Any>(
     override fun removeOnStatusListener(listener: StatusHandler.OnStatusListener) {
         val sizeBefore = onStatusListeners.size
         super.removeOnStatusListener(listener)
-        if (sizeBefore > 0 && onStatusListeners.size == 0) {
+        if (sizeBefore > 0 && onStatusListeners.size == 0 && onValueListeners.size == 0) {
+            dispose()
+        }
+    }
+
+    override fun addOnValueListener(listener: ValueHandler.OnValueListener<V>) {
+        val sizeBefore = onValueListeners.size
+        super.addOnValueListener(listener)
+        if (sizeBefore == 0 && onValueListeners.size > 0 && onStatusListeners.size == 0) {
+            subscribe()
+        }
+    }
+
+    override fun removeOnValueListener(listener: ValueHandler.OnValueListener<V>) {
+        val sizeBefore = onValueListeners.size
+        super.removeOnValueListener(listener)
+        if (sizeBefore > 0 && onValueListeners.size == 0 && onStatusListeners.size == 0) {
             dispose()
         }
     }
@@ -69,7 +88,9 @@ internal class WrappedFlowableStatusHandler<V : Any>(
 
     private val actionProcessor: FlowableProcessor<Unit> = PublishProcessor.create()
 
-    override val actionFlowable: Flowable<Optional<Unit>> = actionProcessor.startWith(Unit).map { Optional(it) }
+    private val started: AtomicBoolean = AtomicBoolean(false)
+
+    override val actionFlowable: Flowable<Optional<Unit>> = actionProcessor.startOnce(Unit).map { Optional(it) }.share()
 
     override fun refresh() {
         actionProcessor.onNext(Unit)
