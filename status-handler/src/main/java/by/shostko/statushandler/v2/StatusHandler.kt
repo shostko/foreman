@@ -5,6 +5,7 @@ package by.shostko.statushandler.v2
 import android.os.Handler
 import android.os.Looper
 import java.util.*
+import kotlin.collections.HashSet
 
 interface StatusHandler {
 
@@ -55,7 +56,7 @@ internal abstract class BaseStatusHandler : StatusHandler, StatusHandler.Callbac
             }
         }
 
-    protected val onStatusListeners: MutableSet<StatusHandler.OnStatusListener> = Collections.newSetFromMap(WeakHashMap())
+    protected val onStatusListeners: MutableSet<StatusHandler.OnStatusListener> = HashSet()
 
     override fun addOnStatusListener(listener: StatusHandler.OnStatusListener) {
         onStatusListeners.add(listener)

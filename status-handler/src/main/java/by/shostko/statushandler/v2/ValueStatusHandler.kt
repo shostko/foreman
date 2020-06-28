@@ -46,7 +46,7 @@ internal abstract class BaseValueStatusHandler<V : Any> : BaseStatusHandler(), V
             }
         }
 
-    protected val onValueListeners: MutableSet<ValueHandler.OnValueListener<V>> = Collections.newSetFromMap(WeakHashMap())
+    protected val onValueListeners: MutableSet<ValueHandler.OnValueListener<V>> = HashSet()
 
     override fun addOnValueListener(listener: ValueHandler.OnValueListener<V>) {
         onValueListeners.add(listener)
