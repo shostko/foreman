@@ -6,10 +6,11 @@ import by.shostko.statushandler.v2.Status
 import by.shostko.statushandler.v2.StatusHandler
 import by.shostko.statushandler.v2.ValueHandler
 
-fun StatusHandler.statusFlowable(): InitialValueFlowable<Status> = StatusHandlerFlowable(this)
+val StatusHandler.statusFlowable: InitialValueFlowable<Status>
+    get() = StatusHandlerFlowable(this)
 
-fun <V : Any> ValueHandler<V>.valueFlowable(): InitialValueFlowable<V> =
-    if (this is BaseFlowableStatusHandler<*, V>) {
+val <V : Any> ValueHandler<V>.valueFlowable: InitialValueFlowable<V>
+    get() = if (this is BaseFlowableStatusHandler<*, V>) {
         RxValueHandlerFlowable(this)
     } else {
         ValueHandlerFlowable(this)
