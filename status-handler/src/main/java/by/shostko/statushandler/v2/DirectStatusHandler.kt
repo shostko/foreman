@@ -2,13 +2,38 @@
 
 package by.shostko.statushandler.v2
 
-fun StatusHandler.Companion.wrapAction(func: () -> Unit) = wrap(ActionWrapper(func))
-fun StatusHandler.Companion.prepareAction(func: () -> Unit) = prepare(ActionWrapper(func))
-fun <P> StatusHandler.Companion.awaitAction(func: (P) -> Unit) = await(ParametrizedActionWrapper(func))
+import android.os.Handler
+import android.os.Looper
 
-fun <V : Any> StatusHandler.Companion.wrapCallable(func: () -> V) = wrap(CallableWrapper(func))
-fun <V : Any> StatusHandler.Companion.prepareCallable(func: () -> V)= prepare(CallableWrapper(func))
-fun <V : Any, P : Any?> StatusHandler.Companion.awaitCallable(func: (P) -> V) = await(ParametrizedCallableWrapper(func))
+fun StatusHandler.Companion.wrapAction(
+    handler: Handler = Handler(Looper.getMainLooper()),
+    func: () -> Unit
+) = wrap(handler, ActionWrapper(func))
+
+fun StatusHandler.Companion.prepareAction(
+    handler: Handler = Handler(Looper.getMainLooper()),
+    func: () -> Unit
+) = prepare(handler, ActionWrapper(func))
+
+fun <P> StatusHandler.Companion.awaitAction(
+    handler: Handler = Handler(Looper.getMainLooper()),
+    func: (P) -> Unit
+) = await(handler, ParametrizedActionWrapper(func))
+
+fun <V : Any> StatusHandler.Companion.wrapCallable(
+    handler: Handler = Handler(Looper.getMainLooper()),
+    func: () -> V
+) = wrap(handler, CallableWrapper(func))
+
+fun <V : Any> StatusHandler.Companion.prepareCallable(
+    handler: Handler = Handler(Looper.getMainLooper()),
+    func: () -> V
+) = prepare(handler, CallableWrapper(func))
+
+fun <V : Any, P : Any?> StatusHandler.Companion.awaitCallable(
+    handler: Handler = Handler(Looper.getMainLooper()),
+    func: (P) -> V
+) = await(handler, ParametrizedCallableWrapper(func))
 
 private class ActionWrapper(
     private val action: () -> Unit
@@ -24,7 +49,7 @@ private class ActionWrapper(
     }
 }
 
-private class ParametrizedActionWrapper<P: Any?>(
+private class ParametrizedActionWrapper<P : Any?>(
     private val action: (P) -> Unit
 ) : (P, StatusHandler.Callback) -> Unit {
     override fun invoke(param: P, callback: StatusHandler.Callback) {
@@ -38,7 +63,7 @@ private class ParametrizedActionWrapper<P: Any?>(
     }
 }
 
-private class CallableWrapper<V: Any>(
+private class CallableWrapper<V : Any>(
     private val action: () -> V
 ) : (ValueStatusHandler.Callback<V>) -> Unit {
     override fun invoke(callback: ValueStatusHandler.Callback<V>) {
@@ -53,7 +78,7 @@ private class CallableWrapper<V: Any>(
     }
 }
 
-private class ParametrizedCallableWrapper<P: Any?, V: Any>(
+private class ParametrizedCallableWrapper<P : Any?, V : Any>(
     private val action: (P) -> V
 ) : (P, ValueStatusHandler.Callback<V>) -> Unit {
     override fun invoke(param: P, callback: ValueStatusHandler.Callback<V>) {

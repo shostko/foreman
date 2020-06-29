@@ -26,9 +26,20 @@ interface ValueStatusHandler<V : Any> : StatusHandler, ValueHandler<V> {
     interface Callback<V> : StatusHandler.Callback, ValueHandler.Callback<V>
 }
 
-fun <V : Any> StatusHandler.Companion.wrap(func: (ValueStatusHandler.Callback<V>) -> Unit): WrappedValueStatusHandler<V> = WrappedValueStatusHandlerImpl(func)
-fun <V : Any> StatusHandler.Companion.prepare(func: (ValueStatusHandler.Callback<V>) -> Unit): PreparedValueStatusHandler<V> = PreparedValueStatusHandlerImpl(func)
-fun <P : Any?, V : Any> StatusHandler.Companion.await(func: (P, ValueStatusHandler.Callback<V>) -> Unit): AwaitValueStatusHandler<P, V> = AwaitValueStatusHandlerImpl(func)
+fun <V : Any> StatusHandler.Companion.wrap(
+    handler: Handler = Handler(Looper.getMainLooper()),
+    func: (ValueStatusHandler.Callback<V>) -> Unit
+): WrappedValueStatusHandler<V> = WrappedValueStatusHandlerImpl(handler, func)
+
+fun <V : Any> StatusHandler.Companion.prepare(
+    handler: Handler = Handler(Looper.getMainLooper()),
+    func: (ValueStatusHandler.Callback<V>) -> Unit
+): PreparedValueStatusHandler<V> = PreparedValueStatusHandlerImpl(handler, func)
+
+fun <P : Any?, V : Any> StatusHandler.Companion.await(
+    handler: Handler = Handler(Looper.getMainLooper()),
+    func: (P, ValueStatusHandler.Callback<V>) -> Unit
+): AwaitValueStatusHandler<P, V> = AwaitValueStatusHandlerImpl(handler, func)
 
 interface WrappedValueStatusHandler<V : Any> : ValueStatusHandler<V>, WrappedStatusHandler
 
@@ -62,34 +73,35 @@ internal abstract class BaseValueStatusHandler<V : Any> : BaseStatusHandler(), V
 }
 
 internal class WrappedValueStatusHandlerImpl<V : Any>(
+    private val handler: Handler,
     private val func: (ValueStatusHandler.Callback<V>) -> Unit
 ) : BaseValueStatusHandler<V>(), WrappedValueStatusHandler<V> {
 
     init {
-        Handler(Looper.getMainLooper()).post {
-            refresh()
-        }
+        refresh()
     }
 
     override fun refresh() {
-        func(this)
+        handler.post { func(this) }
     }
 }
 
 internal class PreparedValueStatusHandlerImpl<V : Any>(
+    private val handler: Handler,
     private val func: (ValueStatusHandler.Callback<V>) -> Unit
 ) : BaseValueStatusHandler<V>(), PreparedValueStatusHandler<V> {
 
     override fun proceed() {
-        func(this)
+        handler.post { func(this) }
     }
 }
 
 internal class AwaitValueStatusHandlerImpl<P : Any?, V : Any>(
+    private val handler: Handler,
     private val func: (P, ValueStatusHandler.Callback<V>) -> Unit
 ) : BaseValueStatusHandler<V>(), AwaitValueStatusHandler<P, V> {
 
     override fun proceed(param: P) {
-        func(param, this)
+        handler.post { func(param, this) }
     }
 }

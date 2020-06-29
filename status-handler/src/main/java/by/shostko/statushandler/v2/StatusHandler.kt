@@ -4,8 +4,6 @@ package by.shostko.statushandler.v2
 
 import android.os.Handler
 import android.os.Looper
-import java.util.*
-import kotlin.collections.HashSet
 
 interface StatusHandler {
 
@@ -27,9 +25,20 @@ interface StatusHandler {
     }
 
     companion object {
-        fun wrap(func: (Callback) -> Unit): WrappedStatusHandler = WrappedStatusHandlerImpl(func)
-        fun prepare(func: (Callback) -> Unit): PreparedStatusHandler = PreparedStatusHandlerImpl(func)
-        fun <P : Any?> await(func: (P, Callback) -> Unit): AwaitStatusHandler<P> = AwaitStatusHandlerImpl(func)
+        fun wrap(
+            handler: Handler = Handler(Looper.getMainLooper()),
+            func: (Callback) -> Unit
+        ): WrappedStatusHandler = WrappedStatusHandlerImpl(handler, func)
+
+        fun prepare(
+            handler: Handler = Handler(Looper.getMainLooper()),
+            func: (Callback) -> Unit
+        ): PreparedStatusHandler = PreparedStatusHandlerImpl(handler, func)
+
+        fun <P : Any?> await(
+            handler: Handler = Handler(Looper.getMainLooper()),
+            func: (P, Callback) -> Unit
+        ): AwaitStatusHandler<P> = AwaitStatusHandlerImpl(handler, func)
     }
 }
 
@@ -71,34 +80,35 @@ internal abstract class BaseStatusHandler : StatusHandler, StatusHandler.Callbac
 }
 
 internal class WrappedStatusHandlerImpl(
+    private val handler: Handler,
     private val func: (StatusHandler.Callback) -> Unit
 ) : BaseStatusHandler(), WrappedStatusHandler {
 
     init {
-        Handler(Looper.getMainLooper()).post {
-            refresh()
-        }
+        refresh()
     }
 
     override fun refresh() {
-        func(this)
+        handler.post { func(this) }
     }
 }
 
 internal class PreparedStatusHandlerImpl(
+    private val handler: Handler,
     private val func: (StatusHandler.Callback) -> Unit
 ) : BaseStatusHandler(), PreparedStatusHandler {
 
     override fun proceed() {
-        func(this)
+        handler.post { func(this) }
     }
 }
 
 internal class AwaitStatusHandlerImpl<P>(
+    private val handler: Handler,
     private val func: (P, StatusHandler.Callback) -> Unit
 ) : BaseStatusHandler(), AwaitStatusHandler<P> {
 
     override fun proceed(param: P) {
-        func(param, this)
+        handler.post { func(param, this) }
     }
 }
