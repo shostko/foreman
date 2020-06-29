@@ -74,8 +74,6 @@ internal class WrappedValueStatusHandlerImpl<V : Any>(
     override fun refresh() {
         func(this)
     }
-
-    override fun retry() = refresh()
 }
 
 internal class PreparedValueStatusHandlerImpl<V : Any>(

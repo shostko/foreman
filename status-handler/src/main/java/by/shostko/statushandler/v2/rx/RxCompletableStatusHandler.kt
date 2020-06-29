@@ -70,8 +70,6 @@ internal class WrappedCompletableStatusHandler(
     override fun refresh() {
         actionProcessor.onNext(Unit)
     }
-
-    override fun retry() = refresh()
 }
 
 internal class PreparedCompletableStatusHandler(

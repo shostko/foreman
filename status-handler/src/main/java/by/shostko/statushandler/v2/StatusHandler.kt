@@ -35,7 +35,6 @@ interface StatusHandler {
 
 interface WrappedStatusHandler : StatusHandler {
     fun refresh()
-    fun retry()
 }
 
 interface PreparedStatusHandler : StatusHandler {
@@ -84,8 +83,6 @@ internal class WrappedStatusHandlerImpl(
     override fun refresh() {
         func(this)
     }
-
-    override fun retry() = refresh()
 }
 
 internal class PreparedStatusHandlerImpl(

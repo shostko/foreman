@@ -95,8 +95,6 @@ internal class WrappedFlowableStatusHandler<V : Any>(
     override fun refresh() {
         actionProcessor.onNext(Unit)
     }
-
-    override fun retry() = refresh()
 }
 
 internal class PreparedFlowableStatusHandler<V : Any>(
