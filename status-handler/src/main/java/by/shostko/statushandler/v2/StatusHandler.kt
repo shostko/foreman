@@ -54,7 +54,7 @@ interface AwaitStatusHandler<P : Any?> : StatusHandler {
     fun proceed(param: P)
 }
 
-internal abstract class BaseStatusHandler : StatusHandler, StatusHandler.Callback {
+abstract class BaseStatusHandler : StatusHandler, StatusHandler.Callback {
 
     final override var status: Status = Status.Initial
         private set(value) {
@@ -67,12 +67,24 @@ internal abstract class BaseStatusHandler : StatusHandler, StatusHandler.Callbac
     protected val onStatusListeners: MutableSet<StatusHandler.OnStatusListener> = HashSet()
 
     override fun addOnStatusListener(listener: StatusHandler.OnStatusListener) {
+        val sizeBefore = onStatusListeners.size
         onStatusListeners.add(listener)
+        if (sizeBefore == 0 && onStatusListeners.size > 0) {
+            onFirstListenerAdded()
+        }
     }
 
-    override fun removeOnStatusListener(listener: StatusHandler.OnStatusListener) {
+     override fun removeOnStatusListener(listener: StatusHandler.OnStatusListener) {
+        val sizeBefore = onStatusListeners.size
         onStatusListeners.remove(listener)
+        if (sizeBefore > 0 && onStatusListeners.size == 0) {
+            onLastListenerRemoved()
+        }
     }
+
+    protected open fun onFirstListenerAdded() {}
+
+    protected open fun onLastListenerRemoved() {}
 
     override fun status(status: Status) {
         this.status = status

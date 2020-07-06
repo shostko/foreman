@@ -2,9 +2,9 @@
 
 package by.shostko.statushandler.v2
 
-sealed class Status(
-    open val working: Int,
-    open val throwable: Throwable?
+open class Status(
+    val working: Int,
+    val throwable: Throwable?
 ) {
     val isInitial: Boolean
         get() = this === Initial
@@ -13,7 +13,7 @@ sealed class Status(
     val isSuccess: Boolean
         get() = this !== Initial && working == NOT_WORKING && throwable == null
     val isWorking: Boolean
-        get() = working != NOT_WORKING
+        get() = working and WORKING == WORKING
 
     final override fun equals(other: Any?): Boolean = this === other || (other is Status && working == other.working && throwable == other.throwable)
 
@@ -29,16 +29,34 @@ sealed class Status(
         override fun toString(): String = "Status{SUCCESS}"
     }
 
-    class Working(override val working: Int) : Status(working, null) {
+    class Working(working: Int) : Status(working, null) {
         override fun toString(): String = "Status{WORKING:$working}"
     }
 
-    class Failed(override val throwable: Throwable?) : Status(NOT_WORKING, throwable) {
+    class Failed(throwable: Throwable?) : Status(NOT_WORKING, throwable) {
         override fun toString(): String = if (throwable == null) "Status{FAILED}" else "Status{FAILED:$throwable}"
     }
 
     companion object {
+        // core
         const val NOT_WORKING = 0
         const val WORKING = 1
+        // paging ext (see TODO url)
+        const val WORKING_APPEND = 2
+        const val WORKING_PREPEND = 4
+
+        fun create(working: Int, throwable: Throwable?): Status = when {
+            working == NOT_WORKING && throwable == null -> Success
+            working == NOT_WORKING && throwable != null -> Failed(throwable)
+            working != NOT_WORKING && throwable == null -> Working(working)
+            else -> Status(working, throwable)
+        }
+
+        fun create(working: Boolean, throwable: Throwable?): Status = when {
+            !working && throwable == null -> Success
+            !working && throwable != null -> Failed(throwable)
+            working && throwable == null -> Working(WORKING)
+            else -> Status(WORKING, throwable)
+        }
     }
 }

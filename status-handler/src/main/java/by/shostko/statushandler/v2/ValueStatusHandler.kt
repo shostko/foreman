@@ -59,12 +59,36 @@ internal abstract class BaseValueStatusHandler<V : Any> : BaseStatusHandler(), V
 
     protected val onValueListeners: MutableSet<ValueHandler.OnValueListener<V>> = HashSet()
 
+    override fun addOnStatusListener(listener: StatusHandler.OnStatusListener) {
+        val sizeBefore = onStatusListeners.size
+        onStatusListeners.add(listener)
+        if (sizeBefore == 0 && onStatusListeners.size > 0 && onValueListeners.size == 0) {
+            onFirstListenerAdded()
+        }
+    }
+
+    override fun removeOnStatusListener(listener: StatusHandler.OnStatusListener) {
+        val sizeBefore = onStatusListeners.size
+        onStatusListeners.remove(listener)
+        if (sizeBefore > 0 && onStatusListeners.size == 0 && onValueListeners.size == 0) {
+            onLastListenerRemoved()
+        }
+    }
+
     override fun addOnValueListener(listener: ValueHandler.OnValueListener<V>) {
+        val sizeBefore = onValueListeners.size
         onValueListeners.add(listener)
+        if (sizeBefore == 0 && onValueListeners.size > 0 && onStatusListeners.size == 0) {
+            onFirstListenerAdded()
+        }
     }
 
     override fun removeOnValueListener(listener: ValueHandler.OnValueListener<V>) {
+        val sizeBefore = onValueListeners.size
         onValueListeners.remove(listener)
+        if (sizeBefore > 0 && onValueListeners.size == 0 && onStatusListeners.size == 0) {
+            onLastListenerRemoved()
+        }
     }
 
     override fun value(value: V) {

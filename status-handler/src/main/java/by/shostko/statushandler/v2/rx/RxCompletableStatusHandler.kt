@@ -32,28 +32,12 @@ internal abstract class BaseCompletableStatusHandler<P : Any?>(
 
     private var disposabe: Disposable? = null
 
-    private fun subscribe() {
+    override fun onFirstListenerAdded() {
         disposabe = resultFlowable.subscribe()
     }
 
-    private fun dispose() {
+    override fun onLastListenerRemoved() {
         disposabe?.dispose()
-    }
-
-    override fun addOnStatusListener(listener: StatusHandler.OnStatusListener) {
-        val sizeBefore = onStatusListeners.size
-        super.addOnStatusListener(listener)
-        if (sizeBefore == 0 && onStatusListeners.size > 0) {
-            subscribe()
-        }
-    }
-
-    override fun removeOnStatusListener(listener: StatusHandler.OnStatusListener) {
-        val sizeBefore = onStatusListeners.size
-        super.removeOnStatusListener(listener)
-        if (sizeBefore > 0 && onStatusListeners.size == 0) {
-            dispose()
-        }
     }
 }
 

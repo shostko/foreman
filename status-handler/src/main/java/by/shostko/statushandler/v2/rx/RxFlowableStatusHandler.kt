@@ -39,44 +39,12 @@ internal abstract class BaseFlowableStatusHandler<P : Any?, V : Any>(
 
     private var disposabe: Disposable? = null
 
-    private fun subscribe() {
+    override fun onFirstListenerAdded() {
         disposabe = resultCompletable.subscribe()
     }
 
-    private fun dispose() {
+    override fun onLastListenerRemoved() {
         disposabe?.dispose()
-    }
-
-    override fun addOnStatusListener(listener: StatusHandler.OnStatusListener) {
-        val sizeBefore = onStatusListeners.size
-        super.addOnStatusListener(listener)
-        if (sizeBefore == 0 && onStatusListeners.size > 0 && onValueListeners.size == 0) {
-            subscribe()
-        }
-    }
-
-    override fun removeOnStatusListener(listener: StatusHandler.OnStatusListener) {
-        val sizeBefore = onStatusListeners.size
-        super.removeOnStatusListener(listener)
-        if (sizeBefore > 0 && onStatusListeners.size == 0 && onValueListeners.size == 0) {
-            dispose()
-        }
-    }
-
-    override fun addOnValueListener(listener: ValueHandler.OnValueListener<V>) {
-        val sizeBefore = onValueListeners.size
-        super.addOnValueListener(listener)
-        if (sizeBefore == 0 && onValueListeners.size > 0 && onStatusListeners.size == 0) {
-            subscribe()
-        }
-    }
-
-    override fun removeOnValueListener(listener: ValueHandler.OnValueListener<V>) {
-        val sizeBefore = onValueListeners.size
-        super.removeOnValueListener(listener)
-        if (sizeBefore > 0 && onValueListeners.size == 0 && onStatusListeners.size == 0) {
-            dispose()
-        }
     }
 }
 
