@@ -41,27 +41,31 @@ class PagingStatus internal constructor(private val states: CombinedLoadStates) 
         get() = (states.prepend as? LoadState.Error)?.error
 
     override fun toString(): String = StringBuilder("PagingStatus{").apply {
+        val initialLength = length
         if (isWorkingRefresh) {
             append("REFRESHING")
         }
         if (isWorkingAppend) {
-            if (length > 0) {
+            if (length > initialLength) {
                 append(";")
             }
             append("APPENDING")
         }
         if (isWorkingPrepend) {
-            if (length > 0) {
+            if (length > initialLength) {
                 append(";")
             }
             append("PREPENDING")
         }
         if (throwable != null) {
-            if (length > 0) {
+            if (length > initialLength) {
                 append(";")
             }
             append("ERROR:")
             append(throwable.message)
+        }
+        if (length == initialLength) {
+            append("SUCCESS")
         }
         append('}')
     }.toString()
