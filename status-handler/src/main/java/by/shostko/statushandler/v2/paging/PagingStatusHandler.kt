@@ -117,6 +117,8 @@ fun <T : Any> ValueStatusHandler<PagingData<T>>.attach(
     valueHandler = this
 )
 
+fun PagingDataAdapter<*, *>.statusHandler(): PagingStatusHandler = PagingStatusHandlerImpl { this }
+
 // TODO handle merging initial StatusHandler and PagingStatusHandler
 
 val Status.isWorkingRefresh: Boolean
