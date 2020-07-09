@@ -15,7 +15,7 @@ interface PagingStatusHandler : WrappedStatusHandler {
     fun retry()
 }
 
-interface PagingValueStatusHandler<T : Any> : PagingStatusHandler, ValueStatusHandler<PagingData<T>>
+interface PagingValueStatusHandler<V : Any> : PagingStatusHandler, ValueStatusHandler<V>
 
 class PagingStatus internal constructor(private val states: CombinedLoadStates) : Status(
     working = (if (states.refresh === LoadState.Loading) WORKING else NOT_WORKING)
@@ -103,16 +103,16 @@ class PagingThrowable(
 fun StatusHandler.Companion.wrapPaging(func: () -> PagingDataAdapter<*, *>): PagingStatusHandler = PagingStatusHandlerImpl(func)
 fun StatusHandler.Companion.wrapPaging(adapter: PagingDataAdapter<*, *>): PagingStatusHandler = PagingStatusHandlerImpl { adapter }
 
-fun <T : Any> ValueStatusHandler<PagingData<T>>.attach(
-    adapter: PagingDataAdapter<T, *>
-): PagingValueStatusHandler<T> = CombinedPagingValueStatusHandler(
+fun <V : Any> ValueStatusHandler<V>.attach(
+    adapter: PagingDataAdapter<*, *>
+): PagingValueStatusHandler<V> = CombinedPagingValueStatusHandler(
     statusHandler = PagingStatusHandlerImpl { adapter },
     valueHandler = this
 )
 
-fun <T : Any> ValueStatusHandler<PagingData<T>>.attach(
-    func: () -> PagingDataAdapter<T, *>
-): PagingValueStatusHandler<T> = CombinedPagingValueStatusHandler(
+fun <V : Any> ValueStatusHandler<V>.attach(
+    func: () -> PagingDataAdapter<*, *>
+): PagingValueStatusHandler<V> = CombinedPagingValueStatusHandler(
     statusHandler = PagingStatusHandlerImpl(func),
     valueHandler = this
 )
