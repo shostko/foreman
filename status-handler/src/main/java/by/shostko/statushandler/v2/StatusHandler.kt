@@ -82,6 +82,8 @@ abstract class BaseStatusHandler : StatusHandler, StatusHandler.Callback {
         }
     }
 
+    protected open fun hasListeners(): Boolean = onStatusListeners.size > 0
+
     protected open fun onFirstListenerAdded() {}
 
     protected open fun onLastListenerRemoved() {}

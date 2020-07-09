@@ -91,6 +91,8 @@ internal abstract class BaseValueStatusHandler<V : Any> : BaseStatusHandler(), V
         }
     }
 
+    override fun hasListeners(): Boolean = super.hasListeners() || onValueListeners.size > 0
+
     override fun value(value: V) {
         this.value = value
     }

@@ -2,6 +2,7 @@
 
 package by.shostko.statushandler.v2.paging
 
+import androidx.lifecycle.Lifecycle
 import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import androidx.paging.PagingData
@@ -15,7 +16,10 @@ interface PagingStatusHandler : WrappedStatusHandler {
     fun retry()
 }
 
-interface PagingValueStatusHandler<V : Any> : PagingStatusHandler, ValueStatusHandler<V>
+interface PagingValueStatusHandler<V : Any> : PagingStatusHandler, ValueStatusHandler<V> {
+    fun attach(adapter: PagingDataAdapter<*, *>, lifecycle: Lifecycle? = null)
+    fun detach()
+}
 
 class PagingStatus internal constructor(private val states: CombinedLoadStates) : Status(
     working = (if (states.refresh === LoadState.Loading) WORKING else NOT_WORKING)
@@ -103,21 +107,9 @@ class PagingThrowable(
 fun StatusHandler.Companion.wrapPaging(func: () -> PagingDataAdapter<*, *>): PagingStatusHandler = PagingStatusHandlerImpl(func)
 fun StatusHandler.Companion.wrapPaging(adapter: PagingDataAdapter<*, *>): PagingStatusHandler = PagingStatusHandlerImpl { adapter }
 
-fun <V : Any> ValueStatusHandler<V>.attach(
-    adapter: PagingDataAdapter<*, *>
-): PagingValueStatusHandler<V> = CombinedPagingValueStatusHandler(
-    statusHandler = PagingStatusHandlerImpl { adapter },
-    valueHandler = this
-)
-
-fun <V : Any> ValueStatusHandler<V>.attach(
-    func: () -> PagingDataAdapter<*, *>
-): PagingValueStatusHandler<V> = CombinedPagingValueStatusHandler(
-    statusHandler = PagingStatusHandlerImpl(func),
-    valueHandler = this
-)
-
 fun PagingDataAdapter<*, *>.statusHandler(): PagingStatusHandler = PagingStatusHandlerImpl { this }
+
+fun <V : Any> ValueStatusHandler<V>.withPaging(): PagingValueStatusHandler<V> = PagingValueStatusHandlerImpl(this)
 
 // TODO handle merging initial StatusHandler and PagingStatusHandler
 
