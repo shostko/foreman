@@ -132,20 +132,20 @@ val Status.throwableAppend: Throwable?
 val Status.throwablePrepend: Throwable?
     get() = if (this is PagingStatus) throwablePrepend else null
 
-fun Status.extractRefresh(): Status = if (this is PagingStatus) {
-    Status.create(isWorkingRefresh, throwableRefresh)
-} else {
-    throw RuntimeException("Can't extract refresh status from not PagingStatus")
+fun Status.extractRefresh(): Status = when {
+    isInitial -> this
+    this is PagingStatus -> Status.create(isWorkingRefresh, throwableRefresh)
+    else -> throw RuntimeException("Can't extract refresh status from not PagingStatus")
 }
 
-fun Status.extractAppend(): Status = if (this is PagingStatus) {
-    Status.create(isWorkingAppend, throwableAppend)
-} else {
-    throw RuntimeException("Can't extract append status from not PagingStatus")
+fun Status.extractAppend(): Status = when {
+    isInitial -> this
+    this is PagingStatus -> Status.create(isWorkingAppend, throwableAppend)
+    else -> throw RuntimeException("Can't extract append status from not PagingStatus")
 }
 
-fun Status.extractPrepend(): Status = if (this is PagingStatus) {
-    Status.create(isWorkingPrepend, throwablePrepend)
-} else {
-    throw RuntimeException("Can't extract prepend status from not PagingStatus")
+fun Status.extractPrepend(): Status = when {
+    isInitial -> this
+    this is PagingStatus -> Status.create(isWorkingPrepend, throwablePrepend)
+    else -> throw RuntimeException("Can't extract prepend status from not PagingStatus")
 }
