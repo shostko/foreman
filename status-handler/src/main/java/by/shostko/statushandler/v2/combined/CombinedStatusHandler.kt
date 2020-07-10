@@ -2,7 +2,7 @@
 
 package by.shostko.statushandler.v2.combined
 
-import by.shostko.statushandler.v2.BaseStatusHandler
+import by.shostko.statushandler.v2.AbsStatusHandler
 import by.shostko.statushandler.v2.Status
 import by.shostko.statushandler.v2.StatusHandler
 
@@ -33,90 +33,45 @@ interface StatusCombinationStrategy : (Status, Status) -> Status {
     }
 }
 
-sealed class StatusHandlerCombinationStrategy {
-    object Merge : StatusHandlerCombinationStrategy()
-    object First : StatusHandlerCombinationStrategy()
-    object Last : StatusHandlerCombinationStrategy()
-    object OnlyFirstInitialized : StatusHandlerCombinationStrategy()
-    class CombineLatest(val statusCombinationStrategy: StatusCombinationStrategy) : StatusHandlerCombinationStrategy()
-}
-
-internal class CombinedStatusHandler(
+private class CombinedStatusHandler(
     private val statusHandler1: StatusHandler,
     private val statusHandler2: StatusHandler,
-    private val strategy: StatusHandlerCombinationStrategy
-) : BaseStatusHandler() {
+    private val strategy: StatusCombinationStrategy
+) : AbsStatusHandler() {
 
-    private var initialized: Boolean = false
+    override val status: Status
+        get() = strategy(statusHandler1.status, statusHandler2.status)
 
-    private val listener1: StatusHandler.OnStatusListener = object :
-        StatusHandler.OnStatusListener {
+    private val listener1: StatusHandler.OnStatusListener = object : StatusHandler.OnStatusListener {
         override fun onStatus(status: Status) {
-            when (strategy) {
-                StatusHandlerCombinationStrategy.First, StatusHandlerCombinationStrategy.Merge -> status(status)
-                StatusHandlerCombinationStrategy.OnlyFirstInitialized -> {
-                    if (!status.isInitial && !initialized) {
-                        statusHandler2.removeOnStatusListener(listener2)
-                        initialized = true
-                    }
-                    status(status)
-                }
-                is StatusHandlerCombinationStrategy.CombineLatest -> status(strategy.statusCombinationStrategy(status, statusHandler2.status))
-            }
+            notifyListeners(strategy(status, statusHandler2.status))
         }
     }
 
-    private val listener2: StatusHandler.OnStatusListener = object :
-        StatusHandler.OnStatusListener {
+    private val listener2: StatusHandler.OnStatusListener = object : StatusHandler.OnStatusListener {
         override fun onStatus(status: Status) {
-            when (strategy) {
-                StatusHandlerCombinationStrategy.Last, StatusHandlerCombinationStrategy.Merge -> status(status)
-                StatusHandlerCombinationStrategy.OnlyFirstInitialized -> {
-                    if (!status.isInitial && !initialized) {
-                        statusHandler1.removeOnStatusListener(listener1)
-                        initialized = true
-                    }
-                    status(status)
-                }
-                is StatusHandlerCombinationStrategy.CombineLatest -> status(strategy.statusCombinationStrategy(statusHandler1.status, status))
-            }
+            notifyListeners(strategy(statusHandler1.status, status))
         }
     }
 
-    override fun addOnStatusListener(listener: StatusHandler.OnStatusListener) {
-        val sizeBefore = onStatusListeners.size
-        super.addOnStatusListener(listener)
-        if (sizeBefore == 0 && onStatusListeners.size > 0) {
-            if (strategy !== StatusHandlerCombinationStrategy.Last) {
-                statusHandler1.addOnStatusListener(listener1)
-            }
-            if (strategy !== StatusHandlerCombinationStrategy.First) {
-                statusHandler2.addOnStatusListener(listener2)
-            }
-        }
+    override fun onFirstListenerAdded() {
+        statusHandler1.addOnStatusListener(listener1)
+        statusHandler2.addOnStatusListener(listener2)
     }
 
-    override fun removeOnStatusListener(listener: StatusHandler.OnStatusListener) {
-        val sizeBefore = onStatusListeners.size
-        super.removeOnStatusListener(listener)
-        if (sizeBefore > 0 && onStatusListeners.size == 0) {
-            if (strategy !== StatusHandlerCombinationStrategy.Last) {
-                statusHandler1.removeOnStatusListener(listener1)
-            }
-            if (strategy !== StatusHandlerCombinationStrategy.First) {
-                statusHandler2.removeOnStatusListener(listener2)
-            }
-        }
+    override fun onLastListenerRemoved() {
+        statusHandler1.removeOnStatusListener(listener1)
+        statusHandler2.removeOnStatusListener(listener2)
     }
 }
 
 fun StatusHandler.Companion.combine(
     sh1: StatusHandler,
     sh2: StatusHandler,
-    strategy: StatusHandlerCombinationStrategy = StatusHandlerCombinationStrategy.CombineLatest(StatusCombinationStrategy.Default)
+    strategy: StatusCombinationStrategy = StatusCombinationStrategy.Default
 ): StatusHandler = CombinedStatusHandler(sh1, sh2, strategy)
 
 fun StatusHandler.combineWith(
     other: StatusHandler,
-    strategy: StatusHandlerCombinationStrategy = StatusHandlerCombinationStrategy.CombineLatest(StatusCombinationStrategy.Default)
+    strategy: StatusCombinationStrategy = StatusCombinationStrategy.Default
 ): StatusHandler = CombinedStatusHandler(this, other, strategy)

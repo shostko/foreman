@@ -54,17 +54,13 @@ interface AwaitStatusHandler<P : Any?> : StatusHandler {
     fun proceed(param: P)
 }
 
-abstract class BaseStatusHandler : StatusHandler, StatusHandler.Callback {
-
-    final override var status: Status = Status.Initial
-        private set(value) {
-            if (field != value) {
-                field = value
-                onStatusListeners.forEach { it.onStatus(value) } // TODO synchronize
-            }
-        }
+abstract class AbsStatusHandler : StatusHandler {
 
     protected val onStatusListeners: MutableSet<StatusHandler.OnStatusListener> = HashSet()
+
+    protected fun notifyListeners(status: Status) {
+        onStatusListeners.forEach { it.onStatus(status) } // TODO synchronize
+    }
 
     override fun addOnStatusListener(listener: StatusHandler.OnStatusListener) {
         val sizeBefore = onStatusListeners.size
@@ -74,7 +70,7 @@ abstract class BaseStatusHandler : StatusHandler, StatusHandler.Callback {
         }
     }
 
-     override fun removeOnStatusListener(listener: StatusHandler.OnStatusListener) {
+    override fun removeOnStatusListener(listener: StatusHandler.OnStatusListener) {
         val sizeBefore = onStatusListeners.size
         onStatusListeners.remove(listener)
         if (sizeBefore > 0 && onStatusListeners.size == 0) {
@@ -87,6 +83,18 @@ abstract class BaseStatusHandler : StatusHandler, StatusHandler.Callback {
     protected open fun onFirstListenerAdded() {}
 
     protected open fun onLastListenerRemoved() {}
+}
+
+abstract class BaseStatusHandler : AbsStatusHandler(), StatusHandler.Callback {
+
+    @Volatile
+    final override var status: Status = Status.Initial
+        private set(value) {
+            if (field != value) {
+                field = value
+                notifyListeners(value)
+            }
+        }
 
     override fun status(status: Status) {
         this.status = status

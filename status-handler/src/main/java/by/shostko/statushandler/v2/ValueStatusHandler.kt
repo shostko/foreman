@@ -49,6 +49,7 @@ interface AwaitValueStatusHandler<P : Any?, V : Any> : ValueStatusHandler<V>, Aw
 
 internal abstract class BaseValueStatusHandler<V : Any> : BaseStatusHandler(), ValueStatusHandler<V>, ValueStatusHandler.Callback<V> {
 
+    @Volatile
     final override var value: V? = null
         private set(value) {
             if (field != value && value != null) {
