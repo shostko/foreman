@@ -10,14 +10,31 @@ import io.reactivex.processors.PublishProcessor
 import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal abstract class BaseFlowableStatusHandler<P : Any?, V : Any>(
-    private val scheduler: Scheduler, // TODO think about second scheduler
-    private val func: (P) -> Flowable<V>
-) : BaseValueStatusHandler<V>() {
+internal abstract class BaseFlowableStatusHandler<P : Any?, V : Any>() : BaseValueStatusHandler<V>() {
 
     protected abstract val actionFlowable: Flowable<Optional<P>>
 
-    internal val valueFlowable: Flowable<V> by lazy {
+    internal abstract val valueFlowable: Flowable<V>
+
+    private val resultCompletable: Completable by lazy { valueFlowable.ignoreElements() }
+
+    private var disposabe: Disposable? = null
+
+    override fun onFirstListenerAdded() {
+        disposabe = resultCompletable.subscribe()
+    }
+
+    override fun onLastListenerRemoved() {
+        disposabe?.dispose()
+    }
+}
+
+internal abstract class RxFlowableStatusHandler<P : Any?, V : Any>(
+    private val scheduler: Scheduler, // TODO think about second scheduler
+    private val func: (P) -> Flowable<V>
+) : BaseFlowableStatusHandler<P, V>() {
+
+    final override val valueFlowable: Flowable<V> by lazy {
         actionFlowable
             .doOnNext { working() }
             .switchMap { param ->
@@ -34,24 +51,12 @@ internal abstract class BaseFlowableStatusHandler<P : Any?, V : Any>(
             }
             .share()
     }
-
-    private val resultCompletable: Completable by lazy { valueFlowable.ignoreElements() }
-
-    private var disposabe: Disposable? = null
-
-    override fun onFirstListenerAdded() {
-        disposabe = resultCompletable.subscribe()
-    }
-
-    override fun onLastListenerRemoved() {
-        disposabe?.dispose()
-    }
 }
 
 internal class WrappedFlowableStatusHandler<V : Any>(
     scheduler: Scheduler,
     func: () -> Flowable<V>
-) : BaseFlowableStatusHandler<Unit, V>(scheduler, { func() }),
+) : RxFlowableStatusHandler<Unit, V>(scheduler, { func() }),
     WrappedValueStatusHandler<V> {
 
     private val actionProcessor: FlowableProcessor<Unit> = PublishProcessor.create()
@@ -68,7 +73,7 @@ internal class WrappedFlowableStatusHandler<V : Any>(
 internal class PreparedFlowableStatusHandler<V : Any>(
     scheduler: Scheduler,
     func: () -> Flowable<V>
-) : BaseFlowableStatusHandler<Unit, V>(scheduler, { func() }),
+) : RxFlowableStatusHandler<Unit, V>(scheduler, { func() }),
     PreparedValueStatusHandler<V> {
 
     private val actionProcessor: FlowableProcessor<Unit> = PublishProcessor.create()
@@ -83,7 +88,7 @@ internal class PreparedFlowableStatusHandler<V : Any>(
 internal class AwaitFlowableStatusHandler<P : Any?, V : Any>(
     scheduler: Scheduler,
     func: (P) -> Flowable<V>
-) : BaseFlowableStatusHandler<P, V>(scheduler, func),
+) : RxFlowableStatusHandler<P, V>(scheduler, func),
     AwaitValueStatusHandler<P, V> {
 
     private val actionProcessor: FlowableProcessor<Optional<P>> = PublishProcessor.create()
