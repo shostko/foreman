@@ -33,8 +33,8 @@ open class Status(
         override fun toString(): String = "Status{WORKING:$working}"
     }
 
-    class Failed(throwable: Throwable?) : Status(NOT_WORKING, throwable) {
-        override fun toString(): String = if (throwable == null) "Status{FAILED}" else "Status{FAILED:$throwable}"
+    class Failed(throwable: Throwable?) : Status(NOT_WORKING, throwable ?: ThrowableNotProvided) {
+        override fun toString(): String = if (throwable === ThrowableNotProvided) "Status{FAILED}" else "Status{FAILED:$throwable}"
     }
 
     companion object {
@@ -60,3 +60,5 @@ open class Status(
         }
     }
 }
+
+private object ThrowableNotProvided: Throwable()
