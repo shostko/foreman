@@ -79,62 +79,62 @@ internal class AwaitCallbackFlowableStatusHandler<P : Any?, V : Any>(
     }
 }
 
-fun <V : Any> StatusHandler.Companion.wrapFlowable(
+fun <V : Any> StatusHandler.Companion.wrapFlowableWithCallback(
     scheduler: Scheduler = Schedulers.io(),
     func: (StatusHandler.Callback) -> Flowable<V>
 ): WrappedValueStatusHandler<V> = WrappedCallbackFlowableStatusHandler(scheduler, func)
 
-fun <V : Any> StatusHandler.Companion.prepareFlowable(
+fun <V : Any> StatusHandler.Companion.prepareFlowableWithCallback(
     scheduler: Scheduler = Schedulers.io(),
     func: (StatusHandler.Callback) -> Flowable<V>
 ): PreparedValueStatusHandler<V> = PreparedCallbackFlowableStatusHandler(scheduler, func)
 
-fun <P : Any?, V : Any> StatusHandler.Companion.awaitFlowable(
+fun <P : Any?, V : Any> StatusHandler.Companion.awaitFlowableWithCallback(
     scheduler: Scheduler = Schedulers.io(),
     func: (P, StatusHandler.Callback) -> Flowable<V>
 ): AwaitValueStatusHandler<P, V> = AwaitCallbackFlowableStatusHandler(scheduler, func)
 
-fun <V : Any> StatusHandler.Companion.wrapObservable(
+fun <V : Any> StatusHandler.Companion.wrapObservableWithCallback(
     scheduler: Scheduler = Schedulers.io(),
     func: (StatusHandler.Callback) -> Observable<V>
 ): WrappedValueStatusHandler<V> = WrappedCallbackFlowableStatusHandler(scheduler) { func(it).toFlowable(BackpressureStrategy.LATEST) }
 
-fun <V : Any> StatusHandler.Companion.prepareObservable(
+fun <V : Any> StatusHandler.Companion.prepareObservableWithCallback(
     scheduler: Scheduler = Schedulers.io(),
     func: (StatusHandler.Callback) -> Observable<V>
 ): PreparedValueStatusHandler<V> = PreparedCallbackFlowableStatusHandler(scheduler) { func(it).toFlowable(BackpressureStrategy.LATEST) }
 
-fun <P : Any?, V : Any> StatusHandler.Companion.awaitObservable(
+fun <P : Any?, V : Any> StatusHandler.Companion.awaitObservableWithCallback(
     scheduler: Scheduler = Schedulers.io(),
     func: (P, StatusHandler.Callback) -> Observable<V>
 ): AwaitValueStatusHandler<P, V> = AwaitCallbackFlowableStatusHandler(scheduler) { param, callback -> func(param, callback).toFlowable(BackpressureStrategy.LATEST) }
 
-fun <V : Any> StatusHandler.Companion.wrapSingle(
+fun <V : Any> StatusHandler.Companion.wrapSingleWithCallback(
     scheduler: Scheduler = Schedulers.io(),
     func: (StatusHandler.Callback) -> Single<V>
 ): WrappedValueStatusHandler<V> = WrappedCallbackFlowableStatusHandler(scheduler) { func(it).toFlowable() }
 
-fun <V : Any> StatusHandler.Companion.prepareSingle(
+fun <V : Any> StatusHandler.Companion.prepareSingleWithCallback(
     scheduler: Scheduler = Schedulers.io(),
     func: (StatusHandler.Callback) -> Single<V>
 ): PreparedValueStatusHandler<V> = PreparedCallbackFlowableStatusHandler(scheduler) { func(it).toFlowable() }
 
-fun <P : Any?, V : Any> StatusHandler.Companion.awaitSingle(
+fun <P : Any?, V : Any> StatusHandler.Companion.awaitSingleWithCallback(
     scheduler: Scheduler = Schedulers.io(),
     func: (P, StatusHandler.Callback) -> Single<V>
 ): AwaitValueStatusHandler<P, V> = AwaitCallbackFlowableStatusHandler(scheduler) { param, callback -> func(param, callback).toFlowable() }
 
-fun <V : Any> StatusHandler.Companion.wrapMaybe(
+fun <V : Any> StatusHandler.Companion.wrapMaybeWithCallback(
     scheduler: Scheduler = Schedulers.io(),
     func: (StatusHandler.Callback) -> Maybe<V>
 ): WrappedValueStatusHandler<V> = WrappedCallbackFlowableStatusHandler(scheduler) { func(it).toFlowable() }
 
-fun <V : Any> StatusHandler.Companion.prepareMaybe(
+fun <V : Any> StatusHandler.Companion.prepareMaybeWithCallback(
     scheduler: Scheduler = Schedulers.io(),
     func: (StatusHandler.Callback) -> Maybe<V>
 ): PreparedValueStatusHandler<V> = PreparedCallbackFlowableStatusHandler(scheduler) { func(it).toFlowable() }
 
-fun <P : Any?, V : Any> StatusHandler.Companion.awaitMaybe(
+fun <P : Any?, V : Any> StatusHandler.Companion.awaitMaybeWithCallback(
     scheduler: Scheduler = Schedulers.io(),
     func: (P, StatusHandler.Callback) -> Maybe<V>
 ): AwaitValueStatusHandler<P, V> = AwaitCallbackFlowableStatusHandler(scheduler) { param, callback -> func(param, callback).toFlowable() }
