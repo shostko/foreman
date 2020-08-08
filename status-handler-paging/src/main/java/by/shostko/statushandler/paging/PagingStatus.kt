@@ -1,10 +1,10 @@
 @file:Suppress("MemberVisibilityCanBePrivate")
 
-package by.shostko.statushandler.v2.paging
+package by.shostko.statushandler.paging
 
 import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
-import by.shostko.statushandler.v2.Status
+import by.shostko.statushandler.Status
 
 class PagingStatus internal constructor(private val states: CombinedLoadStates) : Status(
     working = (if (states.refresh === LoadState.Loading) WORKING else NOT_WORKING)

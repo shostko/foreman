@@ -1,10 +1,10 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
 
-package by.shostko.statushandler.v2.paging
+package by.shostko.statushandler.paging
 
 import androidx.paging.CombinedLoadStates
 import androidx.paging.PagingDataAdapter
-import by.shostko.statushandler.v2.BaseStatusHandler
+import by.shostko.statushandler.BaseStatusHandler
 
 internal class PagingStatusHandlerImpl(
     func: () -> PagingDataAdapter<*, *>

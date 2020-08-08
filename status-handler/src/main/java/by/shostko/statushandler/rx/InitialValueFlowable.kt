@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package by.shostko.statushandler.v2.rx
+package by.shostko.statushandler.rx
 
 import io.reactivex.Flowable
 import io.reactivex.FlowableSubscriber

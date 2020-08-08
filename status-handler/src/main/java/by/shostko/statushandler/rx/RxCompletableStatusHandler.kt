@@ -1,8 +1,8 @@
 @file:Suppress("unused")
 
-package by.shostko.statushandler.v2.rx
+package by.shostko.statushandler.rx
 
-import by.shostko.statushandler.v2.*
+import by.shostko.statushandler.*
 import io.reactivex.Completable
 import io.reactivex.Flowable
 import io.reactivex.Scheduler

@@ -1,10 +1,10 @@
 @file:Suppress("unused")
 
-package by.shostko.statushandler.v2.rx
+package by.shostko.statushandler.rx
 
-import by.shostko.statushandler.v2.Status
-import by.shostko.statushandler.v2.StatusHandler
-import by.shostko.statushandler.v2.ValueHandler
+import by.shostko.statushandler.Status
+import by.shostko.statushandler.StatusHandler
+import by.shostko.statushandler.ValueHandler
 
 val StatusHandler.statusFlowable: InitialValueFlowable<Status>
     get() = StatusHandlerFlowable(this)

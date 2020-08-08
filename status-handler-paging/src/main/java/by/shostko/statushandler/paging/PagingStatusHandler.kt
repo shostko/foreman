@@ -1,12 +1,12 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
 
-package by.shostko.statushandler.v2.paging
+package by.shostko.statushandler.paging
 
 import androidx.lifecycle.Lifecycle
 import androidx.paging.PagingDataAdapter
-import by.shostko.statushandler.v2.StatusHandler
-import by.shostko.statushandler.v2.ValueStatusHandler
-import by.shostko.statushandler.v2.WrappedStatusHandler
+import by.shostko.statushandler.StatusHandler
+import by.shostko.statushandler.ValueStatusHandler
+import by.shostko.statushandler.WrappedStatusHandler
 
 interface PagingStatusHandler : WrappedStatusHandler {
     fun retry()

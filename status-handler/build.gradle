@@ -2,17 +2,6 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-android-extensions'
-apply plugin: 'com.novoda.bintray-release'
-
-publish {
-    userOrg = 'shostko'
-    repoName = 'android'
-    groupId = 'by.shostko'
-    artifactId = 'status-handler'
-    publishVersion = rootProject.ext.versionName
-    desc = 'Helper to handle statuses'
-    website = 'https://github.com/shostko/status-handler'
-}
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -30,12 +19,9 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     compileOnly 'androidx.annotation:annotation:1.1.0'
-    compileOnly 'io.reactivex.rxjava2:rxjava:2.2.11'
+    compileOnly 'io.reactivex.rxjava2:rxjava:2.2.19'
 
-    implementation "androidx.paging:paging-runtime-ktx:3.0.0-alpha02"
-    implementation "androidx.paging:paging-rxjava2-ktx:3.0.0-alpha02"
-
-    implementation 'com.jakewharton.timber:timber:4.7.1'
+    compileOnly 'com.jakewharton.timber:timber:4.7.1'
 }
 
 afterEvaluate {

@@ -1,4 +1,4 @@
-package by.shostko.statushandler.v2.rx
+package by.shostko.statushandler.rx
 
 import java.util.NoSuchElementException
 

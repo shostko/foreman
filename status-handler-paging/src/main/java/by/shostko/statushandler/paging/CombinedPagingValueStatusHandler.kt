@@ -1,13 +1,13 @@
-package by.shostko.statushandler.v2.paging
+package by.shostko.statushandler.paging
 
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.paging.PagingDataAdapter
-import by.shostko.statushandler.v2.*
-import by.shostko.statushandler.v2.combined.CombinedValueStatusHandler
-import by.shostko.statushandler.v2.combined.StatusCombinationStrategy
-import by.shostko.statushandler.v2.combined.combineWith
+import by.shostko.statushandler.*
+import by.shostko.statushandler.combined.CombinedValueStatusHandler
+import by.shostko.statushandler.combined.StatusCombinationStrategy
+import by.shostko.statushandler.combined.combineWith
 
 internal class CombinedPagingValueStatusHandler<V : Any> private constructor(
     private val statusHandlerWrapper: LazyStatusHandler<PagingStatusHandler>,

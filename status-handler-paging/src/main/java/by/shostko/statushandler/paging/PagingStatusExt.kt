@@ -1,8 +1,8 @@
 @file:Suppress("unused")
 
-package by.shostko.statushandler.v2.paging
+package by.shostko.statushandler.paging
 
-import by.shostko.statushandler.v2.Status
+import by.shostko.statushandler.Status
 
 val Status.isWorkingRefresh: Boolean
     get() = if (this is PagingStatus) isWorkingRefresh else isWorking

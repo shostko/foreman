@@ -1,6 +1,6 @@
 @file:Suppress("unused", "MemberVisibilityCanBePrivate")
 
-package by.shostko.statushandler.v2
+package by.shostko.statushandler
 
 import android.os.Handler
 import android.os.Looper
@@ -97,6 +97,37 @@ internal abstract class BaseValueStatusHandler<V : Any> : BaseStatusHandler(), V
     override fun value(value: V) {
         this.value = value
     }
+}
+
+abstract class AbsValueHandler<V: Any> : ValueHandler<V> {
+
+    protected val onValueListeners: MutableSet<ValueHandler.OnValueListener<V>> = HashSet()
+
+    protected fun notifyListeners(value: V) {
+        onValueListeners.forEach { it.onValue(value) } // TODO synchronize
+    }
+
+    override fun addOnValueListener(listener: ValueHandler.OnValueListener<V>) {
+        val sizeBefore = onValueListeners.size
+        onValueListeners.add(listener)
+        if (sizeBefore == 0 && onValueListeners.size > 0) {
+            onFirstListenerAdded()
+        }
+    }
+
+    override fun removeOnValueListener(listener: ValueHandler.OnValueListener<V>) {
+        val sizeBefore = onValueListeners.size
+        onValueListeners.remove(listener)
+        if (sizeBefore > 0 && onValueListeners.size == 0) {
+            onLastListenerRemoved()
+        }
+    }
+
+    protected open fun hasListeners(): Boolean = onValueListeners.size > 0
+
+    protected open fun onFirstListenerAdded() {}
+
+    protected open fun onLastListenerRemoved() {}
 }
 
 internal class WrappedValueStatusHandlerImpl<V : Any>(

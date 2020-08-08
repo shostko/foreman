@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package by.shostko.statushandler.v2
+package by.shostko.statushandler
 
 import android.os.Handler
 import android.os.Looper

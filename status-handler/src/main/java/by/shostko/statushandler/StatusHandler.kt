@@ -1,213 +1,136 @@
-@file:Suppress("unused", "MemberVisibilityCanBePrivate", "RedundantLambdaArrow")
+@file:Suppress("MemberVisibilityCanBePrivate", "unused")
 
 package by.shostko.statushandler
 
-import io.reactivex.*
-import io.reactivex.processors.BehaviorProcessor
-import io.reactivex.processors.FlowableProcessor
-import io.reactivex.processors.PublishProcessor
-import io.reactivex.schedulers.Schedulers
+import android.os.Handler
+import android.os.Looper
 
-enum class Action {
-    PROCEED,
-    REFRESH,
-    RETRY
+interface StatusHandler {
+
+    val status: Status
+
+    fun addOnStatusListener(listener: OnStatusListener)
+    fun removeOnStatusListener(listener: OnStatusListener)
+
+    interface OnStatusListener {
+        fun onStatus(status: Status)
+    }
+
+    interface Callback {
+        fun status(status: Status)
+        fun success() = status(Status.Success)
+        fun working() = status(Status.Working(Status.WORKING))
+        fun working(flag: Int) = status(Status.Working(flag))
+        fun failed(throwable: Throwable?) = status(Status.Failed(throwable))
+    }
+
+    companion object {
+        fun wrap(
+            handler: Handler = Handler(Looper.getMainLooper()),
+            func: (Callback) -> Unit
+        ): WrappedStatusHandler = WrappedStatusHandlerImpl(handler, func)
+
+        fun prepare(
+            handler: Handler = Handler(Looper.getMainLooper()),
+            func: (Callback) -> Unit
+        ): PreparedStatusHandler = PreparedStatusHandlerImpl(handler, func)
+
+        fun <P : Any?> await(
+            handler: Handler = Handler(Looper.getMainLooper()),
+            func: (P, Callback) -> Unit
+        ): AwaitStatusHandler<P> = AwaitStatusHandlerImpl(handler, func)
+    }
 }
 
-abstract class StatusHandler<E> {
-
-    abstract val status: Flowable<Status<E>>
-    abstract val action: Flowable<Action>
-
-    abstract fun proceed()
-    abstract fun refresh()
-    abstract fun retry()
-
-    abstract fun updateWorking()
-    abstract fun updateWorkingForward()
-    abstract fun updateWorkingBackward()
-    abstract fun updateFailed(throwable: Throwable)
-    abstract fun updateFailed(map: Map<String, Any>)
-    abstract fun updateSuccess()
-
-    fun <T> wrapFlowableRequest(callable: () -> Flowable<T>): Flowable<T> = wrapFlowableRequest(null, callable)
-    abstract fun <T> wrapFlowableRequest(errorItem: T?, callable: () -> Flowable<T>): Flowable<T>
-    fun <T> prepareFlowableRequest(callable: () -> Flowable<T>): Flowable<T> = prepareFlowableRequest(null, callable)
-    abstract fun <T> prepareFlowableRequest(errorItem: T?, callable: () -> Flowable<T>): Flowable<T>
-
-    fun <T> wrapObservableRequest(callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(null, callable.toFlowable())
-    fun <T> wrapObservableRequest(errorItem: T?, callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(errorItem, callable.toFlowable())
-    fun <T> prepareObservableRequest(callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(null, callable.toFlowable())
-    fun <T> prepareObservableRequest(errorItem: T?, callable: () -> Observable<T>): Flowable<T> = prepareFlowableRequest(errorItem, callable.toFlowable())
-
-    fun <T> wrapSingleRequest(callable: () -> Single<T>): Flowable<T> = wrapSingleRequest(null, callable)
-    abstract fun <T> wrapSingleRequest(errorItem: T?, callable: () -> Single<T>): Flowable<T>
-    fun <T> prepareSingleRequest(callable: () -> Single<T>): Flowable<T> = prepareSingleRequest(null, callable)
-    abstract fun <T> prepareSingleRequest(errorItem: T?, callable: () -> Single<T>): Flowable<T>
-
-    fun <T> wrapMaybeRequest(callable: () -> Maybe<T>): Flowable<T> = wrapMaybeRequest(null, callable)
-    abstract fun <T> wrapMaybeRequest(errorItem: T?, callable: () -> Maybe<T>): Flowable<T>
-    fun <T> prepareMaybeRequest(callable: () -> Maybe<T>): Flowable<T> = prepareMaybeRequest(null, callable)
-    abstract fun <T> prepareMaybeRequest(errorItem: T?, callable: () -> Maybe<T>): Flowable<T>
-
-    abstract fun wrapCompletableRequest(callable: () -> Completable): Flowable<Unit>
-    abstract fun prepareCompletableRequest(callable: () -> Completable): Flowable<Unit>
-
-    fun <T> wrapCallableRequest(callable: () -> T): Flowable<T> = wrapSingleRequest(null) { Single.fromCallable(callable) }
-    fun <T> wrapCallableRequest(errorItem: T?, callable: () -> T): Flowable<T> = wrapSingleRequest(errorItem) { Single.fromCallable(callable) }
-    fun <T> prepareCallableRequest(callable: () -> T): Flowable<T> = prepareSingleRequest(null) { Single.fromCallable(callable) }
-    fun <T> prepareCallableRequest(errorItem: T?, callable: () -> T): Flowable<T> = prepareSingleRequest(errorItem) { Single.fromCallable(callable) }
-    fun wrapActionRequest(action: () -> Unit): Flowable<Unit> = wrapCompletableRequest { Completable.fromAction(action) }
-    fun prepareActionRequest(action: () -> Unit): Flowable<Unit> = prepareCompletableRequest { Completable.fromAction(action) }
-
-    protected fun <T> (() -> Observable<T>).toFlowable(): (() -> Flowable<T>) = { this().toFlowable(BackpressureStrategy.LATEST) }
+interface WrappedStatusHandler : StatusHandler {
+    fun refresh()
 }
 
-class StatusHandlerImpl<E>(private val factory: Status.Factory<E>) : StatusHandler<E>() {
+interface PreparedStatusHandler : StatusHandler {
+    fun proceed()
+}
 
-    private val statusProcessor: FlowableProcessor<Status<E>> = BehaviorProcessor.createDefault(factory.createInitial())
+interface AwaitStatusHandler<P : Any?> : StatusHandler {
+    fun proceed(param: P)
+}
 
-    private val actionProcessor: FlowableProcessor<Action> = PublishProcessor.create()
+abstract class AbsStatusHandler : StatusHandler {
 
-    override val status: Flowable<Status<E>> = statusProcessor.hide()
+    protected val onStatusListeners: MutableSet<StatusHandler.OnStatusListener> = HashSet()
 
-    override val action: Flowable<Action> = actionProcessor.hide()
+    protected fun notifyListeners(status: Status) {
+        onStatusListeners.forEach { it.onStatus(status) } // TODO synchronize
+    }
 
-    // region action
+    override fun addOnStatusListener(listener: StatusHandler.OnStatusListener) {
+        val sizeBefore = onStatusListeners.size
+        onStatusListeners.add(listener)
+        if (sizeBefore == 0 && onStatusListeners.size > 0) {
+            onFirstListenerAdded()
+        }
+    }
 
-    override fun proceed() {
-        actionProcessor.onNext(Action.PROCEED)
+    override fun removeOnStatusListener(listener: StatusHandler.OnStatusListener) {
+        val sizeBefore = onStatusListeners.size
+        onStatusListeners.remove(listener)
+        if (sizeBefore > 0 && onStatusListeners.size == 0) {
+            onLastListenerRemoved()
+        }
+    }
+
+    protected open fun hasListeners(): Boolean = onStatusListeners.size > 0
+
+    protected open fun onFirstListenerAdded() {}
+
+    protected open fun onLastListenerRemoved() {}
+}
+
+abstract class BaseStatusHandler : AbsStatusHandler(), StatusHandler.Callback {
+
+    @Volatile
+    final override var status: Status = Status.Initial
+        private set(value) {
+            if (field != value) {
+                field = value
+                notifyListeners(value)
+            }
+        }
+
+    override fun status(status: Status) {
+        this.status = status
+    }
+}
+
+internal class WrappedStatusHandlerImpl(
+    private val handler: Handler,
+    private val func: (StatusHandler.Callback) -> Unit
+) : BaseStatusHandler(), WrappedStatusHandler {
+
+    init {
+        refresh()
     }
 
     override fun refresh() {
-        actionProcessor.onNext(Action.REFRESH)
+        handler.post { func(this) }
     }
+}
 
-    override fun retry() {
-        actionProcessor.onNext(Action.RETRY)
+internal class PreparedStatusHandlerImpl(
+    private val handler: Handler,
+    private val func: (StatusHandler.Callback) -> Unit
+) : BaseStatusHandler(), PreparedStatusHandler {
+
+    override fun proceed() {
+        handler.post { func(this) }
     }
+}
 
-    //endregion
+internal class AwaitStatusHandlerImpl<P>(
+    private val handler: Handler,
+    private val func: (P, StatusHandler.Callback) -> Unit
+) : BaseStatusHandler(), AwaitStatusHandler<P> {
 
-    // region status
-
-    override fun updateWorking() = statusProcessor.onNext(factory.createWorking(Direction.FULL))
-
-    override fun updateWorkingForward() = statusProcessor.onNext(factory.createWorking(Direction.FORWARD))
-
-    override fun updateWorkingBackward() = statusProcessor.onNext(factory.createWorking(Direction.BACKWARD))
-
-    override fun updateFailed(throwable: Throwable) = statusProcessor.onNext(factory.createFailed(throwable))
-
-    override fun updateFailed(map: Map<String, Any>) = statusProcessor.onNext(factory.createFailed(map))
-
-    override fun updateSuccess() = statusProcessor.onNext(factory.createSuccess())
-
-    //endregion
-
-    // region Flowable
-
-    override fun <T> wrapFlowableRequest(errorItem: T?, callable: () -> Flowable<T>): Flowable<T> =
-        action.startWith(Action.PROCEED)
-            .doOnNext { updateWorking() }
-            .switchMap {
-                Flowable.defer(callable)
-                    .subscribeOn(Schedulers.io())
-                    .doOnNext { updateSuccess() }
-                    .doOnError { updateFailed(it) }
-                    .doOnComplete { updateSuccess() }
-                    .onErrorResumeNext { _: Throwable -> if (errorItem == null) Flowable.never() else Flowable.just(errorItem) }
-            }
-
-    override fun <T> prepareFlowableRequest(errorItem: T?, callable: () -> Flowable<T>): Flowable<T> =
-        action.doOnNext { updateWorking() }
-            .switchMap {
-                Flowable.defer(callable)
-                    .subscribeOn(Schedulers.io())
-                    .doOnNext { updateSuccess() }
-                    .doOnError { updateFailed(it) }
-                    .doOnComplete { updateSuccess() }
-                    .onErrorResumeNext { _: Throwable -> if (errorItem == null) Flowable.never() else Flowable.just(errorItem) }
-            }
-
-    // endregion
-
-    // region Single
-
-    override fun <T> wrapSingleRequest(errorItem: T?, callable: () -> Single<T>): Flowable<T> =
-        action.startWith(Action.PROCEED)
-            .doOnNext { updateWorking() }
-            .switchMapSingle {
-                Single.defer(callable)
-                    .subscribeOn(Schedulers.io())
-                    .doOnSuccess { updateSuccess() }
-                    .doOnError { updateFailed(it) }
-                    .onErrorResumeNext { if (errorItem == null) Single.never() else Single.just(errorItem) }
-            }
-
-    override fun <T> prepareSingleRequest(errorItem: T?, callable: () -> Single<T>): Flowable<T> =
-        action.doOnNext { updateWorking() }
-            .switchMapSingle {
-                Single.defer(callable)
-                    .subscribeOn(Schedulers.io())
-                    .doOnSuccess { updateSuccess() }
-                    .doOnError { updateFailed(it) }
-                    .onErrorResumeNext { if (errorItem == null) Single.never() else Single.just(errorItem) }
-            }
-
-    // endregion
-
-    // region Maybe
-
-    override fun <T> wrapMaybeRequest(errorItem: T?, callable: () -> Maybe<T>): Flowable<T> =
-        action.startWith(Action.PROCEED)
-            .doOnNext { updateWorking() }
-            .switchMapMaybe {
-                Maybe.defer(callable)
-                    .subscribeOn(Schedulers.io())
-                    .doOnSuccess { updateSuccess() }
-                    .doOnError { updateFailed(it) }
-                    .doOnComplete { updateSuccess() }
-                    .onErrorResumeNext(if (errorItem == null) Maybe.never() else Maybe.just(errorItem))
-            }
-
-    override fun <T> prepareMaybeRequest(errorItem: T?, callable: () -> Maybe<T>): Flowable<T> =
-        action.doOnNext { updateWorking() }
-            .switchMapMaybe {
-                Maybe.defer(callable)
-                    .subscribeOn(Schedulers.io())
-                    .doOnSuccess { updateSuccess() }
-                    .doOnError { updateFailed(it) }
-                    .doOnComplete { updateSuccess() }
-                    .onErrorResumeNext(if (errorItem == null) Maybe.never() else Maybe.just(errorItem))
-            }
-
-    // endregion
-
-    // region Completable
-
-    override fun wrapCompletableRequest(callable: () -> Completable): Flowable<Unit> =
-        action.startWith(Action.PROCEED)
-            .doOnNext { updateWorking() }
-            .switchMapSingle {
-                Completable.defer(callable)
-                    .subscribeOn(Schedulers.io())
-                    .doOnComplete { updateSuccess() }
-                    .doOnError { updateFailed(it) }
-                    .onErrorResumeNext { Completable.never() }
-                    .toSingleDefault(Unit)
-            }
-
-    override fun prepareCompletableRequest(callable: () -> Completable): Flowable<Unit> =
-        action.doOnNext { updateWorking() }
-            .switchMapSingle {
-                Completable.defer(callable)
-                    .subscribeOn(Schedulers.io())
-                    .doOnComplete { updateSuccess() }
-                    .doOnError { updateFailed(it) }
-                    .onErrorResumeNext { Completable.never() }
-                    .toSingleDefault(Unit)
-            }
-
-    // endregion
+    override fun proceed(param: P) {
+        handler.post { func(param, this) }
+    }
 }

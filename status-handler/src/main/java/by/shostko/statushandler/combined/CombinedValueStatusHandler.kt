@@ -1,13 +1,13 @@
 @file:Suppress("unused")
 
-package by.shostko.statushandler.v2.combined
+package by.shostko.statushandler.combined
 
-import by.shostko.statushandler.v2.Status
-import by.shostko.statushandler.v2.StatusHandler
-import by.shostko.statushandler.v2.ValueHandler
-import by.shostko.statushandler.v2.ValueStatusHandler
+import by.shostko.statushandler.Status
+import by.shostko.statushandler.StatusHandler
+import by.shostko.statushandler.ValueHandler
+import by.shostko.statushandler.ValueStatusHandler
 
-internal open class CombinedValueStatusHandler<V : Any>(
+open class CombinedValueStatusHandler<V : Any>(
     private val statusHandler: StatusHandler,
     private val valueHandler: ValueHandler<V>
 ) : ValueStatusHandler<V> {

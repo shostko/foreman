@@ -1,8 +1,9 @@
 @file:Suppress("unused", "MemberVisibilityCanBePrivate")
 
-package by.shostko.statushandler.v2.rx
+package by.shostko.statushandler.rx
 
-import by.shostko.statushandler.v2.*
+import by.shostko.statushandler.*
+import by.shostko.statushandler.BaseValueStatusHandler
 import io.reactivex.*
 import io.reactivex.disposables.Disposable
 import io.reactivex.processors.FlowableProcessor

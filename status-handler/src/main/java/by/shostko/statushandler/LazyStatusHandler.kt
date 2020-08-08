@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package by.shostko.statushandler.v2
+package by.shostko.statushandler
 
 class LazyStatusHandler<S : StatusHandler> : BaseStatusHandler(), StatusHandler.OnStatusListener {
 
