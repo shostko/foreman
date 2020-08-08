@@ -29,7 +29,7 @@ open class Status(
         override fun toString(): String = "Status{SUCCESS}"
     }
 
-    class Working(working: Int) : Status(working, null) {
+    class Working(working: Int = WORKING) : Status(working, null) {
         override fun toString(): String = "Status{WORKING:$working}"
     }
 
