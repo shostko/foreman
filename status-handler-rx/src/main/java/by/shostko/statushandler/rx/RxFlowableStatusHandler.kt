@@ -9,7 +9,6 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.processors.FlowableProcessor
 import io.reactivex.processors.PublishProcessor
 import io.reactivex.schedulers.Schedulers
-import java.util.concurrent.atomic.AtomicBoolean
 
 internal abstract class BaseFlowableStatusHandler<P : Any?, V : Any>() : BaseValueStatusHandler<V>() {
 

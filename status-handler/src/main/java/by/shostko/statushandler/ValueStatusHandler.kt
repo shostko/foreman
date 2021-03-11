@@ -47,7 +47,7 @@ interface PreparedValueStatusHandler<V : Any> : ValueStatusHandler<V>, PreparedS
 
 interface AwaitValueStatusHandler<P : Any?, V : Any> : ValueStatusHandler<V>, AwaitStatusHandler<P>
 
-internal abstract class BaseValueStatusHandler<V : Any> : BaseStatusHandler(), ValueStatusHandler<V>, ValueStatusHandler.Callback<V> {
+abstract class BaseValueStatusHandler<V : Any> : BaseStatusHandler(), ValueStatusHandler<V>, ValueStatusHandler.Callback<V> {
 
     @Volatile
     final override var value: V? = null
