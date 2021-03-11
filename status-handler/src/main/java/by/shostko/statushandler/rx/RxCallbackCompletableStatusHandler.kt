@@ -2,54 +2,37 @@
 
 package by.shostko.statushandler.rx
 
-import by.shostko.statushandler.*
+import by.shostko.statushandler.AwaitStatusHandler
+import by.shostko.statushandler.PreparedStatusHandler
+import by.shostko.statushandler.StatusHandler
+import by.shostko.statushandler.WrappedStatusHandler
 import io.reactivex.Completable
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
-import io.reactivex.disposables.Disposable
 import io.reactivex.processors.FlowableProcessor
 import io.reactivex.processors.PublishProcessor
 import io.reactivex.schedulers.Schedulers
 
-internal abstract class BaseCompletableStatusHandler<P : Any?> : BaseStatusHandler() {
-
-    protected abstract val actionFlowable: Flowable<Optional<P>>
-
-    protected abstract val resultCompletable: Completable
-
-    private var disposabe: Disposable? = null
-
-    override fun onFirstListenerAdded() {
-        disposabe = resultCompletable.subscribe()
-    }
-
-    override fun onLastListenerRemoved() {
-        disposabe?.dispose()
-    }
-}
-
-internal abstract class RxCompletableStatusHandler<P : Any?>(
+internal abstract class RxCallbackCompletableStatusHandler<P : Any?>(
     private val scheduler: Scheduler,
-    private val func: (P) -> Completable
+    private val func: (P, StatusHandler.Callback) -> Completable
 ) : BaseCompletableStatusHandler<P>() {
 
     override val resultCompletable: Completable by lazy {
         actionFlowable
-            .doOnNext { working() }
             .switchMapCompletable { param ->
-                Completable.defer { func(param.value) }
+                Completable.defer { func(param.value, this) }
                     .subscribeOn(scheduler)
-                    .doOnComplete { success() }
                     .doOnError { failed(it) }
                     .onErrorResumeNext { Completable.complete() }
             }
     }
 }
 
-internal class WrappedCompletableStatusHandler(
+internal class WrappedCallbackCompletableStatusHandler(
     scheduler: Scheduler,
-    func: () -> Completable
-) : RxCompletableStatusHandler<Unit>(scheduler, { func() }),
+    func: (StatusHandler.Callback) -> Completable
+) : RxCallbackCompletableStatusHandler<Unit>(scheduler, { _, callback -> func(callback) }),
     WrappedStatusHandler {
 
     private val actionProcessor: FlowableProcessor<Unit> = PublishProcessor.create()
@@ -61,10 +44,10 @@ internal class WrappedCompletableStatusHandler(
     }
 }
 
-internal class PreparedCompletableStatusHandler(
+internal class PreparedCallbackCompletableStatusHandler(
     scheduler: Scheduler,
-    func: () -> Completable
-) : RxCompletableStatusHandler<Unit>(scheduler, { func() }),
+    func: (StatusHandler.Callback) -> Completable
+) : RxCallbackCompletableStatusHandler<Unit>(scheduler, { _, callback -> func(callback) }),
     PreparedStatusHandler {
 
     private val actionProcessor: FlowableProcessor<Unit> = PublishProcessor.create()
@@ -76,10 +59,10 @@ internal class PreparedCompletableStatusHandler(
     }
 }
 
-internal class AwaitCompletableStatusHandler<P : Any?>(
+internal class AwaitCallbackCompletableStatusHandler<P : Any?>(
     scheduler: Scheduler,
-    func: (P) -> Completable
-) : RxCompletableStatusHandler<P>(scheduler, func),
+    func: (P, StatusHandler.Callback) -> Completable
+) : RxCallbackCompletableStatusHandler<P>(scheduler, func),
     AwaitStatusHandler<P> {
 
     private val actionProcessor: FlowableProcessor<Optional<P>> = PublishProcessor.create()
@@ -91,17 +74,17 @@ internal class AwaitCompletableStatusHandler<P : Any?>(
     }
 }
 
-fun StatusHandler.Companion.wrapCompletable(
+fun StatusHandler.Companion.wrapCompletableWithCallback(
     scheduler: Scheduler = Schedulers.io(),
-    func: () -> Completable
-): WrappedStatusHandler = WrappedCompletableStatusHandler(scheduler, func)
+    func: (StatusHandler.Callback) -> Completable
+): WrappedStatusHandler = WrappedCallbackCompletableStatusHandler(scheduler, func)
 
-fun StatusHandler.Companion.prepareCompletable(
+fun StatusHandler.Companion.prepareCompletableWithCallback(
     scheduler: Scheduler = Schedulers.io(),
-    func: () -> Completable
-): PreparedStatusHandler = PreparedCompletableStatusHandler(scheduler, func)
+    func: (StatusHandler.Callback) -> Completable
+): PreparedStatusHandler = PreparedCallbackCompletableStatusHandler(scheduler, func)
 
-fun <P : Any?> StatusHandler.Companion.awaitCompletable(
+fun <P : Any?> StatusHandler.Companion.awaitCompletableWithCallback(
     scheduler: Scheduler = Schedulers.io(),
-    func: (P) -> Completable
-): AwaitStatusHandler<P> = AwaitCompletableStatusHandler(scheduler, func)
+    func: (P, StatusHandler.Callback) -> Completable
+): AwaitStatusHandler<P> = AwaitCallbackCompletableStatusHandler(scheduler, func)
