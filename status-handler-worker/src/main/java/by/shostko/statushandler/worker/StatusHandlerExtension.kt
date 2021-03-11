@@ -2,19 +2,7 @@
 
 package by.shostko.statushandler.worker
 
-import android.os.Handler
-import android.os.Looper
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.Observer
-import androidx.work.WorkInfo
-import androidx.work.WorkManager
-import by.shostko.statushandler.Action
-import by.shostko.statushandler.StatusHandler
-import io.reactivex.Flowable
-import io.reactivex.FlowableTransformer
-import io.reactivex.functions.BiFunction
-import java.util.*
-
+/*
 private fun <E> StatusHandler<E>.startWorkAndObserveStatus(lifecycleOwner: LifecycleOwner, callable: () -> UUID) {
     val uuid = callable.invoke()
     Handler(Looper.getMainLooper()).post {
@@ -52,4 +40,6 @@ fun <E, T> StatusHandler<E>.prepareWithWorker(lifecycleOwner: LifecycleOwner, ca
                 .startWith(Unit)
                 .distinctUntilChanged(),
             upstream, BiFunction { _, t -> t })
-    }
+    }*/
+// TODO replace with new implementation for workers
+// TODO create mb another artifact/module for worker+paging combination
