@@ -1,8 +1,6 @@
 package by.shostko.statushandler.paging
 
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.*
 import androidx.paging.PagingDataAdapter
 import by.shostko.statushandler.*
 import by.shostko.statushandler.combined.CombinedValueStatusHandler
@@ -45,9 +43,8 @@ internal class CombinedPagingValueStatusHandler<V : Any> private constructor(
 
     private inner class InternalLifecycleObserver(
         val lifecycle: Lifecycle
-    ) : LifecycleObserver {
-        @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-        fun onDestroy() {
+    ) : DefaultLifecycleObserver {
+        override fun onDestroy(owner: LifecycleOwner) {
             lifecycle.removeObserver(this)
             detach()
         }
