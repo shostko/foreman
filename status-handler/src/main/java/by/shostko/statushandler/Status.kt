@@ -47,12 +47,8 @@ open class Status(
 
         fun create(working: Int, throwable: Throwable?): Status = when {
             working == NOT_WORKING && throwable == null -> Success
-            working == NOT_WORKING && throwable != null -> Failed(
-                throwable
-            )
-            working != NOT_WORKING && throwable == null -> Working(
-                working
-            )
+            working == NOT_WORKING && throwable != null -> Failed(throwable)
+            working != NOT_WORKING && throwable == null -> Working(working)
             else -> Status(working, throwable)
         }
 

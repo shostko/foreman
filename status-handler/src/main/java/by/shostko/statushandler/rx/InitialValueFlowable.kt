@@ -62,7 +62,7 @@ abstract class InitialValueFlowable<T> : Flowable<T>() {
                 } else {
                     downstream.onNext(value)
                     if (n > 1) {
-                        super.request(n)
+                        super.request(n - 1)
                     }
                 }
             }

@@ -63,7 +63,7 @@ class PagingStatus internal constructor(private val states: CombinedLoadStates) 
 class PagingThrowable(
     val states: CombinedLoadStates
 ) : Throwable() {
-    override val message: String?
+    override val message: String
         get() = StringBuilder().apply {
             (states.refresh as? LoadState.Error)?.error?.let {
                 append("refresh='")
