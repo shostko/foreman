@@ -55,14 +55,21 @@ abstract class InitialValueFlowable<T> : Flowable<T>() {
             listener: Listener
         ) : InternalSubscription(listener) {
 
+            private var initialSent: Boolean = false
+
             override fun request(n: Long) {
-                val value = initialValue
-                if (value == null) {
+                if (initialSent) {
                     super.request(n)
                 } else {
-                    downstream.onNext(value)
-                    if (n > 1) {
-                        super.request(n - 1)
+                    initialSent = true
+                    val value = initialValue
+                    if (value == null) {
+                        super.request(n)
+                    } else {
+                        downstream.onNext(value)
+                        if (n > 1) {
+                            super.request(n - 1)
+                        }
                     }
                 }
             }
@@ -83,6 +90,7 @@ abstract class InitialValueFlowable<T> : Flowable<T>() {
             private val downstream: Subscriber<in T>
         ) : Subscription, FlowableSubscriber<T> {
 
+            private var initialSent: Boolean = false
             private var upstream: Subscription? = null
 
             override fun cancel() {
@@ -90,13 +98,18 @@ abstract class InitialValueFlowable<T> : Flowable<T>() {
             }
 
             override fun request(n: Long) {
-                val value = initialValue
-                if (value == null) {
+                if (initialSent) {
                     upstream?.request(n)
                 } else {
-                    downstream.onNext(value)
-                    if (n > 1) {
-                        upstream?.request(n - 1)
+                    initialSent = true
+                    val value = initialValue
+                    if (value == null) {
+                        upstream?.request(n)
+                    } else {
+                        downstream.onNext(value)
+                        if (n > 1) {
+                            upstream?.request(n - 1)
+                        }
                     }
                 }
             }
