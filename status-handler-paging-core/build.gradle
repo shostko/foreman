@@ -13,8 +13,6 @@ android {
 
 dependencies {
     compileOnly project(':status-handler')
-    implementation project(':status-handler-paging-core')
-    compileOnly "androidx.paging:paging-runtime-ktx:2.1.2"
 }
 
 afterEvaluate {

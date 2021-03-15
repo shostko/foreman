@@ -6,85 +6,30 @@ import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import by.shostko.statushandler.Status
 
-class PagingStatus internal constructor(private val states: CombinedLoadStates) : Status(
+class PagingStatus internal constructor(private val states: CombinedLoadStates) : CorePagingStatus(
     working = (if (states.refresh === LoadState.Loading) WORKING else NOT_WORKING)
-        or (if (states.append === LoadState.Loading) WORKING_APPEND else NOT_WORKING)
-        or (if (states.prepend === LoadState.Loading) WORKING_PREPEND else NOT_WORKING),
+            or (if (states.append === LoadState.Loading) WORKING_APPEND else NOT_WORKING)
+            or (if (states.prepend === LoadState.Loading) WORKING_PREPEND else NOT_WORKING),
     throwable = if (states.refresh is LoadState.Error || states.append is LoadState.Error || states.prepend is LoadState.Error) {
-        PagingThrowable(states)
+        PagingThrowable(
+            throwableRefresh = (states.refresh as LoadState.Error).error,
+            throwableAppend = (states.prepend as LoadState.Error).error,
+            throwablePrepend = (states.append as LoadState.Error).error
+        )
     } else {
         null
     }
 ) {
-    val isWorkingRefresh: Boolean
+    override val isWorkingRefresh: Boolean
         get() = isWorking
-    val isWorkingAppend: Boolean
+    override val isWorkingAppend: Boolean
         get() = working and WORKING_APPEND == WORKING_APPEND
-    val isWorkingPrepend: Boolean
+    override val isWorkingPrepend: Boolean
         get() = working and WORKING_PREPEND == WORKING_PREPEND
-    val throwableRefresh: Throwable?
+    override val throwableRefresh: Throwable?
         get() = (states.refresh as? LoadState.Error)?.error
-    val throwableAppend: Throwable?
+    override val throwableAppend: Throwable?
         get() = (states.append as? LoadState.Error)?.error
-    val throwablePrepend: Throwable?
+    override val throwablePrepend: Throwable?
         get() = (states.prepend as? LoadState.Error)?.error
-
-    override fun toString(): String = StringBuilder("PagingStatus{").apply {
-        val initialLength = length
-        if (isWorkingRefresh) {
-            append("REFRESHING")
-        }
-        if (isWorkingAppend) {
-            if (length > initialLength) {
-                append(";")
-            }
-            append("APPENDING")
-        }
-        if (isWorkingPrepend) {
-            if (length > initialLength) {
-                append(";")
-            }
-            append("PREPENDING")
-        }
-        if (throwable != null) {
-            if (length > initialLength) {
-                append(";")
-            }
-            append("ERROR:")
-            append(throwable.message)
-        }
-        if (length == initialLength) {
-            append("SUCCESS")
-        }
-        append('}')
-    }.toString()
-}
-
-class PagingThrowable(
-    val states: CombinedLoadStates
-) : Throwable() {
-    override val message: String
-        get() = StringBuilder().apply {
-            (states.refresh as? LoadState.Error)?.error?.let {
-                append("refresh='")
-                append(it.message)
-                append('\'')
-            }
-            (states.prepend as? LoadState.Error)?.error?.let {
-                if (length > 0) {
-                    append("; ")
-                }
-                append("prepend='")
-                append(it.message)
-                append('\'')
-            }
-            (states.append as? LoadState.Error)?.error?.let {
-                if (length > 0) {
-                    append("; ")
-                }
-                append("append='")
-                append(it.message)
-                append('\'')
-            }
-        }.toString()
 }
