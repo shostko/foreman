@@ -1,1 +1,1 @@
-include ':sample', ':status-handler', ':status-handler-rx', ':status-handler-paging', ':status-handler-worker'
+include ':sample', ':status-handler', ':status-handler-rx', ':status-handler-paging3', ':status-handler-worker'
