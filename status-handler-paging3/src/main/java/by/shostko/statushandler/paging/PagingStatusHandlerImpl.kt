@@ -15,7 +15,7 @@ internal class PagingStatusHandlerImpl(
     private val adapterListener: (CombinedLoadStates) -> Unit by lazy {
         object : (CombinedLoadStates) -> Unit {
             override fun invoke(states: CombinedLoadStates) {
-                status(states.asPagingStatus())
+                status(states.toPagingStatus())
             }
         }
     }

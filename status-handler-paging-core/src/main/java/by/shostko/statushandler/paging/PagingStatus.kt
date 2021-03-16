@@ -4,14 +4,23 @@ package by.shostko.statushandler.paging
 
 import by.shostko.statushandler.Status
 
-abstract class PagingStatus(working: Int, throwable: Throwable?) : Status(working, throwable) {
-    abstract val isWorkingRefresh: Boolean
-    abstract val isWorkingAppend: Boolean
-    abstract val isWorkingPrepend: Boolean
-    abstract val throwableRefresh: Throwable?
-    abstract val throwableAppend: Throwable?
-    abstract val throwablePrepend: Throwable?
-
+class PagingStatus(
+    val isWorkingRefresh: Boolean,
+    val throwableRefresh: Throwable?,
+    val isWorkingAppend: Boolean,
+    val throwableAppend: Throwable?,
+    val isWorkingPrepend: Boolean,
+    val throwablePrepend: Throwable?
+) : Status(
+    working = (if (isWorkingRefresh) WORKING else NOT_WORKING)
+            or (if (isWorkingAppend) WORKING_APPEND else NOT_WORKING)
+            or (if (isWorkingPrepend) WORKING_PREPEND else NOT_WORKING),
+    throwable = if (throwableRefresh != null || throwableAppend != null || throwablePrepend != null) {
+        PagingThrowable(throwableRefresh, throwableAppend, throwablePrepend)
+    } else {
+        null
+    }
+) {
     override fun toString(): String = StringBuilder("PagingStatus{").apply {
         val initialLength = length
         if (isWorkingRefresh) {
@@ -43,7 +52,7 @@ abstract class PagingStatus(working: Int, throwable: Throwable?) : Status(workin
     }.toString()
 }
 
-class PagingThrowable(
+private class PagingThrowable(
     val throwableRefresh: Throwable?,
     val throwableAppend: Throwable?,
     val throwablePrepend: Throwable?
