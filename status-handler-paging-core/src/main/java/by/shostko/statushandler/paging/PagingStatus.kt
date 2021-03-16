@@ -81,4 +81,9 @@ private class PagingThrowable(
                 append('\'')
             }
         }.toString()
+
+    override fun toString(): String = StringBuilder("PagingThrowable(")
+        .append(message)
+        .append(')')
+        .toString()
 }
