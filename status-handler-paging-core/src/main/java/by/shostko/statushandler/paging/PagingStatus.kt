@@ -4,7 +4,7 @@ package by.shostko.statushandler.paging
 
 import by.shostko.statushandler.Status
 
-abstract class CorePagingStatus(working: Int, throwable: Throwable?) : Status(working, throwable) {
+abstract class PagingStatus(working: Int, throwable: Throwable?) : Status(working, throwable) {
     abstract val isWorkingRefresh: Boolean
     abstract val isWorkingAppend: Boolean
     abstract val isWorkingPrepend: Boolean

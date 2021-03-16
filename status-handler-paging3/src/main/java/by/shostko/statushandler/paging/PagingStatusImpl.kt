@@ -4,9 +4,8 @@ package by.shostko.statushandler.paging
 
 import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
-import by.shostko.statushandler.Status
 
-class PagingStatus internal constructor(private val states: CombinedLoadStates) : CorePagingStatus(
+private class PagingStatusImpl(private val states: CombinedLoadStates) : PagingStatus(
     working = (if (states.refresh === LoadState.Loading) WORKING else NOT_WORKING)
             or (if (states.append === LoadState.Loading) WORKING_APPEND else NOT_WORKING)
             or (if (states.prepend === LoadState.Loading) WORKING_PREPEND else NOT_WORKING),
@@ -33,3 +32,5 @@ class PagingStatus internal constructor(private val states: CombinedLoadStates) 
     override val throwablePrepend: Throwable?
         get() = (states.prepend as? LoadState.Error)?.error
 }
+
+internal fun CombinedLoadStates.asPagingStatus(): PagingStatus = PagingStatusImpl(this)

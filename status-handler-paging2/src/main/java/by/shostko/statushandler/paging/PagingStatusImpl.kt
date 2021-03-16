@@ -4,14 +4,14 @@ package by.shostko.statushandler.paging
 
 import by.shostko.statushandler.Status
 
-class PagingStatus internal constructor(
+private class PagingStatusImpl(
     override val isWorkingRefresh: Boolean,
     override val throwableRefresh: Throwable?,
     override val isWorkingAppend: Boolean,
     override val throwableAppend: Throwable?,
     override val isWorkingPrepend: Boolean,
     override val throwablePrepend: Throwable?
-) : CorePagingStatus(
+) : PagingStatus(
     working = (if (isWorkingRefresh) WORKING else NOT_WORKING)
             or (if (isWorkingAppend) WORKING_APPEND else NOT_WORKING)
             or (if (isWorkingPrepend) WORKING_PREPEND else NOT_WORKING),
@@ -22,9 +22,9 @@ class PagingStatus internal constructor(
     }
 )
 
-internal fun Status.updateRefresh(isWorking: Boolean, throwable: Throwable?) =
-    if (this is PagingStatus) {
-        PagingStatus(
+internal fun Status.updateRefresh(isWorking: Boolean, throwable: Throwable?): PagingStatus =
+    if (this is PagingStatusImpl) {
+        PagingStatusImpl(
             isWorkingRefresh = isWorking,
             throwableRefresh = throwable,
             isWorkingAppend = isWorkingAppend,
@@ -33,7 +33,7 @@ internal fun Status.updateRefresh(isWorking: Boolean, throwable: Throwable?) =
             throwablePrepend = throwablePrepend
         )
     } else {
-        PagingStatus(
+        PagingStatusImpl(
             isWorkingRefresh = isWorking,
             throwableRefresh = throwable,
             isWorkingAppend = false,
@@ -43,9 +43,9 @@ internal fun Status.updateRefresh(isWorking: Boolean, throwable: Throwable?) =
         )
     }
 
-internal fun Status.updateAppend(isWorking: Boolean, throwable: Throwable?) =
-    if (this is PagingStatus) {
-        PagingStatus(
+internal fun Status.updateAppend(isWorking: Boolean, throwable: Throwable?): PagingStatus =
+    if (this is PagingStatusImpl) {
+        PagingStatusImpl(
             isWorkingRefresh = isWorkingRefresh,
             throwableRefresh = throwableRefresh,
             isWorkingAppend = isWorking,
@@ -54,7 +54,7 @@ internal fun Status.updateAppend(isWorking: Boolean, throwable: Throwable?) =
             throwablePrepend = throwablePrepend
         )
     } else {
-        PagingStatus(
+        PagingStatusImpl(
             isWorkingRefresh = this.isWorking,
             throwableRefresh = this.throwable,
             isWorkingAppend = isWorking,
@@ -64,9 +64,9 @@ internal fun Status.updateAppend(isWorking: Boolean, throwable: Throwable?) =
         )
     }
 
-internal fun Status.updatePrepend(isWorking: Boolean, throwable: Throwable?) =
-    if (this is PagingStatus) {
-        PagingStatus(
+internal fun Status.updatePrepend(isWorking: Boolean, throwable: Throwable?): PagingStatus =
+    if (this is PagingStatusImpl) {
+        PagingStatusImpl(
             isWorkingRefresh = isWorkingRefresh,
             throwableRefresh = throwableRefresh,
             isWorkingAppend = isWorkingAppend,
@@ -75,7 +75,7 @@ internal fun Status.updatePrepend(isWorking: Boolean, throwable: Throwable?) =
             throwablePrepend = throwable
         )
     } else {
-        PagingStatus(
+        PagingStatusImpl(
             isWorkingRefresh = this.isWorking,
             throwableRefresh = this.throwable,
             isWorkingAppend = false,
@@ -88,22 +88,23 @@ internal fun Status.updatePrepend(isWorking: Boolean, throwable: Throwable?) =
 internal fun Status.updateAppendPrepend(
     isWorkingAppend: Boolean, throwableAppend: Throwable?,
     isWorkingPrepend: Boolean, throwablePrepend: Throwable?
-) = if (this is PagingStatus) {
-    PagingStatus(
-        isWorkingRefresh = isWorkingRefresh,
-        throwableRefresh = throwableRefresh,
-        isWorkingAppend = isWorkingAppend,
-        throwableAppend = throwableAppend,
-        isWorkingPrepend = isWorkingPrepend,
-        throwablePrepend = throwablePrepend
-    )
-} else {
-    PagingStatus(
-        isWorkingRefresh = this.isWorking,
-        throwableRefresh = this.throwable,
-        isWorkingAppend = isWorkingAppend,
-        throwableAppend = throwableAppend,
-        isWorkingPrepend = isWorkingPrepend,
-        throwablePrepend = throwablePrepend
-    )
-}
+): PagingStatus =
+    if (this is PagingStatusImpl) {
+        PagingStatusImpl(
+            isWorkingRefresh = isWorkingRefresh,
+            throwableRefresh = throwableRefresh,
+            isWorkingAppend = isWorkingAppend,
+            throwableAppend = throwableAppend,
+            isWorkingPrepend = isWorkingPrepend,
+            throwablePrepend = throwablePrepend
+        )
+    } else {
+        PagingStatusImpl(
+            isWorkingRefresh = this.isWorking,
+            throwableRefresh = this.throwable,
+            isWorkingAppend = isWorkingAppend,
+            throwableAppend = throwableAppend,
+            isWorkingPrepend = isWorkingPrepend,
+            throwablePrepend = throwablePrepend
+        )
+    }
