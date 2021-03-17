@@ -19,7 +19,7 @@ android {
 dependencies {
     implementation project(':status-handler')
     implementation project(':status-handler-rx')
-    implementation project(':status-handler-paging')
+    implementation project(':status-handler-paging3')
     implementation project(':status-handler-worker')
 
     implementation "androidx.paging:paging-runtime-ktx:3.0.0-beta02"

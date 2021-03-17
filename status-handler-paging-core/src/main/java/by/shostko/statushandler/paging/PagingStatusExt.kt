@@ -38,7 +38,7 @@ fun Status.extractPrepend(): Status = when {
     else -> throw RuntimeException("Can't extract prepend status from not PagingStatus")
 }
 
-internal fun Status.asRefreshingStatusWrapper(): Status = if (isInitial || this is PagingStatus) this else RefreshingStatusWrapper(this)
+fun Status.asRefreshingStatusWrapper(): Status = if (isInitial || this is PagingStatus) this else RefreshingStatusWrapper(this)
 
 private class RefreshingStatusWrapper(status: Status) : Status(status.working, status.throwable) {
     override fun toString(): String = StringBuilder("RefreshingStatus{").apply {

@@ -1,0 +1,23 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode rootProject.ext.versionCode
+        versionName rootProject.ext.versionName
+    }
+}
+
+dependencies {
+    compileOnly project(':status-handler')
+    implementation project(':status-handler-paging-core')
+    implementation "androidx.lifecycle:lifecycle-common-java8:2.3.0"
+    compileOnly "androidx.paging:paging-runtime-ktx:3.0.0-beta02"
+}
+
+afterEvaluate {
+    generateReleaseBuildConfig.enabled = false
+}

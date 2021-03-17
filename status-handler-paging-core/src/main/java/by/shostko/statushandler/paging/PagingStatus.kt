@@ -2,33 +2,25 @@
 
 package by.shostko.statushandler.paging
 
-import androidx.paging.CombinedLoadStates
-import androidx.paging.LoadState
 import by.shostko.statushandler.Status
 
-class PagingStatus internal constructor(private val states: CombinedLoadStates) : Status(
-    working = (if (states.refresh === LoadState.Loading) WORKING else NOT_WORKING)
-        or (if (states.append === LoadState.Loading) WORKING_APPEND else NOT_WORKING)
-        or (if (states.prepend === LoadState.Loading) WORKING_PREPEND else NOT_WORKING),
-    throwable = if (states.refresh is LoadState.Error || states.append is LoadState.Error || states.prepend is LoadState.Error) {
-        PagingThrowable(states)
+class PagingStatus(
+    val isWorkingRefresh: Boolean,
+    val throwableRefresh: Throwable?,
+    val isWorkingAppend: Boolean,
+    val throwableAppend: Throwable?,
+    val isWorkingPrepend: Boolean,
+    val throwablePrepend: Throwable?
+) : Status(
+    working = (if (isWorkingRefresh) WORKING else NOT_WORKING)
+            or (if (isWorkingAppend) WORKING_APPEND else NOT_WORKING)
+            or (if (isWorkingPrepend) WORKING_PREPEND else NOT_WORKING),
+    throwable = if (throwableRefresh != null || throwableAppend != null || throwablePrepend != null) {
+        PagingThrowable(throwableRefresh, throwableAppend, throwablePrepend)
     } else {
         null
     }
 ) {
-    val isWorkingRefresh: Boolean
-        get() = isWorking
-    val isWorkingAppend: Boolean
-        get() = working and WORKING_APPEND == WORKING_APPEND
-    val isWorkingPrepend: Boolean
-        get() = working and WORKING_PREPEND == WORKING_PREPEND
-    val throwableRefresh: Throwable?
-        get() = (states.refresh as? LoadState.Error)?.error
-    val throwableAppend: Throwable?
-        get() = (states.append as? LoadState.Error)?.error
-    val throwablePrepend: Throwable?
-        get() = (states.prepend as? LoadState.Error)?.error
-
     override fun toString(): String = StringBuilder("PagingStatus{").apply {
         val initialLength = length
         if (isWorkingRefresh) {
@@ -60,17 +52,19 @@ class PagingStatus internal constructor(private val states: CombinedLoadStates) 
     }.toString()
 }
 
-class PagingThrowable(
-    val states: CombinedLoadStates
+private class PagingThrowable(
+    val throwableRefresh: Throwable?,
+    val throwableAppend: Throwable?,
+    val throwablePrepend: Throwable?
 ) : Throwable() {
     override val message: String
         get() = StringBuilder().apply {
-            (states.refresh as? LoadState.Error)?.error?.let {
+            throwableRefresh?.let {
                 append("refresh='")
                 append(it.message)
                 append('\'')
             }
-            (states.prepend as? LoadState.Error)?.error?.let {
+            throwableAppend?.let {
                 if (length > 0) {
                     append("; ")
                 }
@@ -78,7 +72,7 @@ class PagingThrowable(
                 append(it.message)
                 append('\'')
             }
-            (states.append as? LoadState.Error)?.error?.let {
+            throwablePrepend?.let {
                 if (length > 0) {
                     append("; ")
                 }
@@ -87,4 +81,9 @@ class PagingThrowable(
                 append('\'')
             }
         }.toString()
+
+    override fun toString(): String = StringBuilder("PagingThrowable(")
+        .append(message)
+        .append(')')
+        .toString()
 }
