@@ -1,19 +1,24 @@
+@file:Suppress("unused")
+
 package by.shostko.statushandler.paging.singlerequest
 
 import by.shostko.statushandler.StatusHandler
 import by.shostko.statushandler.paging.pagekeyed.BasePageKeyedDataSource
 
-@Suppress("unused")
 abstract class AsyncSingleRequestDataSource<V>(
     statusHandlerCallback: StatusHandler.Callback
 ) : BasePageKeyedDataSource<Int, V>(statusHandlerCallback) {
 
     override fun onLoadInitial(params: LoadInitialParams<Int>, callback: LoadInitialCallback<Int, V>) {
-        onLoad(CallbackImpl({
-            onSuccessResultInitial(it, null, null, params, callback)
-        }, {
-            onFailedResultInitial(it, params, callback)
-        }))
+        onLoad(object : Callback<V>() {
+            override fun onSuccessResult(list: List<V>) {
+                onSuccessResultInitial(list, null, null, params, callback)
+            }
+
+            override fun onFailedResult(e: Throwable) {
+                onFailedResultInitial(e, params, callback)
+            }
+        })
     }
 
     override fun onLoadAfter(params: LoadParams<Int>, callback: LoadCallback<Int, V>) {
@@ -30,19 +35,5 @@ abstract class AsyncSingleRequestDataSource<V>(
     protected abstract class Callback<V> {
         abstract fun onSuccessResult(list: List<V>)
         abstract fun onFailedResult(e: Throwable)
-    }
-
-    private class CallbackImpl<V>(
-        private val successFun: ((List<V>) -> Any),
-        private val failedFun: ((Throwable) -> Any)
-    ) : Callback<V>() {
-
-        override fun onSuccessResult(list: List<V>) {
-            successFun.invoke(list)
-        }
-
-        override fun onFailedResult(e: Throwable) {
-            failedFun.invoke(e)
-        }
     }
 }

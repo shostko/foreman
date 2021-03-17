@@ -1,9 +1,10 @@
+@file:Suppress("unused")
+
 package by.shostko.statushandler.paging.singlerequest
 
 import by.shostko.statushandler.StatusHandler
 import by.shostko.statushandler.paging.pagekeyed.BasePageKeyedDataSource
 
-@Suppress("unused")
 abstract class SimpleSingleRequestDataSource<V>(
     statusHandlerCallback: StatusHandler.Callback
 ) : BasePageKeyedDataSource<Int, V>(statusHandlerCallback) {

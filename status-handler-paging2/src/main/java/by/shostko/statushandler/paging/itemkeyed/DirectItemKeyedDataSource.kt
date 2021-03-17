@@ -1,15 +1,16 @@
+@file:Suppress("unused")
+
 package by.shostko.statushandler.paging.itemkeyed
 
 import by.shostko.statushandler.StatusHandler
 
-@Suppress("unused")
-abstract class SimpleItemKeyedDataSource<K, V>(
+abstract class DirectItemKeyedDataSource<K, V>(
     statusHandlerCallback: StatusHandler.Callback
 ) : BaseItemKeyedDataSource<K, V>(statusHandlerCallback) {
 
     final override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<V>) {
-        val list = onLoadInitial(params.requestedInitialKey, params.requestedLoadSize)
-        onSuccessResultInitial(list, params, callback)
+        val (list, position, total) = onLoadInitial(params.requestedInitialKey, params.requestedLoadSize)
+        onSuccessResultInitial(list, position, total, params, callback)
     }
 
     final override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<V>) {
@@ -23,11 +24,19 @@ abstract class SimpleItemKeyedDataSource<K, V>(
     }
 
     @Throws(Throwable::class)
-    protected abstract fun onLoadInitial(key: K?, requestedLoadSize: Int): List<V>
+    protected abstract fun onLoadInitial(key: K?, requestedLoadSize: Int): InitialResult<V>
 
     @Throws(Throwable::class)
     protected abstract fun onLoadAfter(key: K, requestedLoadSize: Int): List<V>
 
     @Throws(Throwable::class)
     protected abstract fun onLoadBefore(key: K, requestedLoadSize: Int): List<V>
+
+    protected fun result(list: List<V>, position: Int, total: Int): InitialResult<V> = InitialResult(list, position, total)
+
+    protected data class InitialResult<V>(
+        val list: List<V>,
+        val position: Int,
+        val total: Int
+    )
 }

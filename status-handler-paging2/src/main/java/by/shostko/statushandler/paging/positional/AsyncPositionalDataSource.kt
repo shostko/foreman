@@ -7,41 +7,48 @@ abstract class AsyncPositionalDataSource<V>(
     statusHandlerCallback: StatusHandler.Callback
 ) : BasePositionalDataSource<V>(statusHandlerCallback) {
 
-    override fun onLoadInitial(params: LoadInitialParams, callback: LoadInitialCallback<V>) {
-        onLoad(params.requestedStartPosition, params.requestedLoadSize, CallbackImpl({
-            onSuccessResult(it, params, callback)
-        }, {
-            onFailedResult(it, params, callback)
-        }))
+    final override fun onLoadInitial(params: LoadInitialParams, callback: LoadInitialCallback<V>) {
+        onLoadInitial(params.requestedStartPosition, params.requestedLoadSize, object : CallbackInitial<V>() {
+            override fun onSuccessResult(list: List<V>, frontPosition: Int) {
+                onSuccessResult(list, frontPosition, params, callback)
+            }
+
+            override fun onSuccessResult(list: List<V>, frontPosition: Int, total: Int) {
+                onSuccessResult(list, frontPosition, total, params, callback)
+            }
+
+            override fun onFailedResult(e: Throwable) {
+                onFailedResult(e, params, callback)
+            }
+        })
     }
 
-    override fun onLoadRange(params: LoadRangeParams, callback: LoadRangeCallback<V>) {
-        onLoad(params.startPosition, params.loadSize, CallbackImpl({
-            onSuccessResult(it, params, callback)
-        }, {
-            onFailedResult(it, params, callback)
-        }))
+    final override fun onLoadRange(params: LoadRangeParams, callback: LoadRangeCallback<V>) {
+        onLoadRange(params.startPosition, params.loadSize, object : Callback<V>() {
+            override fun onSuccessResult(list: List<V>) {
+                onSuccessResult(list, params, callback)
+            }
+
+            override fun onFailedResult(e: Throwable) {
+                onFailedResult(e, params, callback)
+            }
+        })
     }
 
     @Throws(Throwable::class)
-    protected abstract fun onLoad(startPosition: Int, loadSize: Int, callback: Callback<V>)
+    protected abstract fun onLoadInitial(startPosition: Int, loadSize: Int, callback: CallbackInitial<V>)
+
+    @Throws(Throwable::class)
+    protected abstract fun onLoadRange(startPosition: Int, loadSize: Int, callback: Callback<V>)
+
+    protected abstract class CallbackInitial<V> {
+        abstract fun onSuccessResult(list: List<V>, frontPosition: Int)
+        abstract fun onSuccessResult(list: List<V>, frontPosition: Int, total: Int)
+        abstract fun onFailedResult(e: Throwable)
+    }
 
     protected abstract class Callback<V> {
         abstract fun onSuccessResult(list: List<V>)
         abstract fun onFailedResult(e: Throwable)
-    }
-
-    private class CallbackImpl<V>(
-        private val successFun: ((List<V>) -> Any),
-        private val failedFun: ((Throwable) -> Any)
-    ) : Callback<V>() {
-
-        override fun onSuccessResult(list: List<V>) {
-            successFun.invoke(list)
-        }
-
-        override fun onFailedResult(e: Throwable) {
-            failedFun.invoke(e)
-        }
     }
 }

@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package by.shostko.statushandler.paging.pagekeyed
 
 import by.shostko.statushandler.StatusHandler
@@ -6,10 +8,8 @@ import io.reactivex.Scheduler
 import io.reactivex.Single
 import io.reactivex.disposables.CompositeDisposable
 
-@Suppress("unused", "MemberVisibilityCanBePrivate")
 abstract class RxPageKeyedDataSource<K, V>(
     statusHandlerCallback: StatusHandler.Callback,
-    protected val firstPageKey: K,
     private val scheduler: Scheduler? = null
 ) : BasePageKeyedDataSource<K, V>(statusHandlerCallback) {
 
@@ -22,21 +22,17 @@ abstract class RxPageKeyedDataSource<K, V>(
             return disposableDelegate.value
         }
 
-    override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<K, V>) {
-        val single = onLoad(firstPageKey, params.requestedLoadSize)
+    final override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<K, V>) {
+        val single = onLoadInitial(params)
         if (scheduler == null) {
-            val result = single.blockingGetWithoutWrap()
-            val previousPageKey = prevKey(firstPageKey)
-            val nextPageKey = nextKey(firstPageKey)
-            onSuccessResultInitial(result, previousPageKey, nextPageKey, params, callback)
+            val (prev, list, next) = single.blockingGetWithoutWrap()
+            onSuccessResultInitial(list, prev, next, params, callback)
         } else {
             disposable.add(
                 single.subscribeOn(scheduler)
                     .observeOn(scheduler)
-                    .subscribe({
-                        val previousPageKey = prevKey(firstPageKey)
-                        val nextPageKey = nextKey(firstPageKey)
-                        onSuccessResultInitial(it, previousPageKey, nextPageKey, params, callback)
+                    .subscribe({ (prev, list, next) ->
+                        onSuccessResultInitial(list, prev, next, params, callback)
                     }, {
                         onFailedResultInitial(it, params, callback)
                     })
@@ -44,19 +40,17 @@ abstract class RxPageKeyedDataSource<K, V>(
         }
     }
 
-    override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<K, V>) {
-        val single = onLoad(params.key, params.requestedLoadSize)
+    final override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<K, V>) {
+        val single = onLoadAfter(params)
         if (scheduler == null) {
-            val result = single.blockingGetWithoutWrap()
-            val nextPageKey = nextKey(params.key)
-            onSuccessResultAfter(result, nextPageKey, params, callback)
+            val (list, next) = single.blockingGetWithoutWrap()
+            onSuccessResultAfter(list, next, params, callback)
         } else {
             disposable.add(
                 single.subscribeOn(scheduler)
                     .observeOn(scheduler)
-                    .subscribe({
-                        val nextPageKey = nextKey(params.key)
-                        onSuccessResultAfter(it, nextPageKey, params, callback)
+                    .subscribe({ (list, next) ->
+                        onSuccessResultAfter(list, next, params, callback)
                     }, {
                         onFailedResultAfter(it, params, callback)
                     })
@@ -64,19 +58,17 @@ abstract class RxPageKeyedDataSource<K, V>(
         }
     }
 
-    override fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<K, V>) {
-        val single = onLoad(params.key, params.requestedLoadSize)
+    final override fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<K, V>) {
+        val single = onLoadBefore(params)
         if (scheduler == null) {
-            val result = single.blockingGetWithoutWrap()
-            val previousPageKey = prevKey(params.key)
-            onSuccessResultBefore(result, previousPageKey, params, callback)
+            val (prev, list) = single.blockingGetWithoutWrap()
+            onSuccessResultBefore(list, prev, params, callback)
         } else {
             disposable.add(
                 single.subscribeOn(scheduler)
                     .observeOn(scheduler)
-                    .subscribe({
-                        val previousPageKey = prevKey(params.key)
-                        onSuccessResultBefore(it, previousPageKey, params, callback)
+                    .subscribe({ (prev, list) ->
+                        onSuccessResultBefore(list, prev, params, callback)
                     }, {
                         onFailedResultBefore(it, params, callback)
                     })
@@ -84,10 +76,34 @@ abstract class RxPageKeyedDataSource<K, V>(
         }
     }
 
-    protected abstract fun nextKey(key: K): K?
-
-    protected abstract fun prevKey(key: K): K?
+    @Throws(Throwable::class)
+    protected abstract fun onLoadInitial(params: LoadInitialParams<K>): Single<InitialResult<K, V>>
 
     @Throws(Throwable::class)
-    protected abstract fun onLoad(key: K, requestedLoadSize: Int): Single<List<V>>
+    protected abstract fun onLoadAfter(params: LoadParams<K>): Single<AfterResult<K, V>>
+
+    @Throws(Throwable::class)
+    protected abstract fun onLoadBefore(params: LoadParams<K>): Single<BeforeResult<K, V>>
+
+    protected fun result(prev: K?, list: List<V>, next: K?): InitialResult<K, V> = InitialResult(prev, list, next)
+
+    protected fun result(list: List<V>, next: K?): AfterResult<K, V> = AfterResult(list, next)
+
+    protected fun result(prev: K?, list: List<V>): BeforeResult<K, V> = BeforeResult(prev, list)
+
+    protected data class InitialResult<K, V>(
+        val prev: K?,
+        val list: List<V>,
+        val next: K?
+    )
+
+    protected data class AfterResult<K, V>(
+        val list: List<V>,
+        val next: K?
+    )
+
+    protected data class BeforeResult<K, V>(
+        val prev: K?,
+        val list: List<V>
+    )
 }

@@ -1,64 +1,70 @@
+@file:Suppress("unused")
+
 package by.shostko.statushandler.paging.pagekeyed
 
 import by.shostko.statushandler.StatusHandler
 
-@Suppress("MemberVisibilityCanBePrivate", "unused", "CheckResult")
 abstract class AsyncPageKeyedDataSource<K, V>(
-    statusHandlerCallback: StatusHandler.Callback,
-    protected val firstPageKey: K
+    statusHandlerCallback: StatusHandler.Callback
 ) : BasePageKeyedDataSource<K, V>(statusHandlerCallback) {
 
-    override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<K, V>) {
-        onLoad(firstPageKey, params.requestedLoadSize, CallbackImpl({
-            val previousPageKey = prevKey(firstPageKey)
-            val nextPageKey = nextKey(firstPageKey)
-            onSuccessResultInitial(it, previousPageKey, nextPageKey, params, callback)
-        }, {
-            onFailedResultInitial(it, params, callback)
-        }))
+    final override fun onLoadInitial(params: LoadInitialParams<K>, callback: LoadInitialCallback<K, V>) {
+        onLoadInitial(params.requestedLoadSize, object : CallbackInitial<K, V>() {
+            override fun onSuccessResult(list: List<V>, previousPageKey: K, nextPageKey: K) {
+                onSuccessResultInitial(list, previousPageKey, nextPageKey, params, callback)
+            }
+
+            override fun onFailedResult(e: Throwable) {
+                onFailedResultInitial(e, params, callback)
+            }
+        })
     }
 
-    override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<K, V>) {
-        onLoad(params.key, params.requestedLoadSize, CallbackImpl({
-            val nextPageKey = nextKey(params.key)
-            onSuccessResultAfter(it, nextPageKey, params, callback)
-        }, {
-            onFailedResultAfter(it, params, callback)
-        }))
+    final override fun onLoadAfter(params: LoadParams<K>, callback: LoadCallback<K, V>) {
+        onLoadAfter(params.key, params.requestedLoadSize, object : CallbackAfter<K, V>() {
+            override fun onSuccessResult(list: List<V>, nextPageKey: K) {
+                onSuccessResultAfter(list, nextPageKey, params, callback)
+            }
+
+            override fun onFailedResult(e: Throwable) {
+                onFailedResultAfter(e, params, callback)
+            }
+        })
     }
 
-    override fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<K, V>) {
-        onLoad(params.key, params.requestedLoadSize, CallbackImpl({
-            val previousPageKey = prevKey(params.key)
-            onSuccessResultBefore(it, previousPageKey, params, callback)
-        }, {
-            onFailedResultBefore(it, params, callback)
-        }))
+    final override fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<K, V>) {
+        onLoadBefore(params.key, params.requestedLoadSize, object : CallbackBefore<K, V>() {
+            override fun onSuccessResult(list: List<V>, previousPageKey: K) {
+                onSuccessResultBefore(list, previousPageKey, params, callback)
+            }
+
+            override fun onFailedResult(e: Throwable) {
+                onFailedResultBefore(e, params, callback)
+            }
+        })
     }
-
-    protected abstract fun nextKey(key: K): K?
-
-    protected abstract fun prevKey(key: K): K?
 
     @Throws(Throwable::class)
-    protected abstract fun onLoad(key: K, requestedLoadSize: Int, callback: Callback<V>)
+    protected abstract fun onLoadInitial(requestedLoadSize: Int, callback: CallbackInitial<K, V>)
 
-    protected abstract class Callback<V> {
-        abstract fun onSuccessResult(list: List<V>)
+    @Throws(Throwable::class)
+    protected abstract fun onLoadAfter(key: K, requestedLoadSize: Int, callback: CallbackAfter<K, V>)
+
+    @Throws(Throwable::class)
+    protected abstract fun onLoadBefore(key: K, requestedLoadSize: Int, callback: CallbackBefore<K, V>)
+
+    protected abstract class CallbackInitial<K, V> {
+        abstract fun onSuccessResult(list: List<V>, previousPageKey: K, nextPageKey: K)
         abstract fun onFailedResult(e: Throwable)
     }
 
-    private class CallbackImpl<V>(
-        private val successFun: ((List<V>) -> Any),
-        private val failedFun: ((Throwable) -> Any)
-    ) : Callback<V>() {
+    protected abstract class CallbackAfter<K, V> {
+        abstract fun onSuccessResult(list: List<V>, nextPageKey: K)
+        abstract fun onFailedResult(e: Throwable)
+    }
 
-        override fun onSuccessResult(list: List<V>) {
-            successFun.invoke(list)
-        }
-
-        override fun onFailedResult(e: Throwable) {
-            failedFun.invoke(e)
-        }
+    protected abstract class CallbackBefore<K, V> {
+        abstract fun onSuccessResult(list: List<V>, previousPageKey: K)
+        abstract fun onFailedResult(e: Throwable)
     }
 }

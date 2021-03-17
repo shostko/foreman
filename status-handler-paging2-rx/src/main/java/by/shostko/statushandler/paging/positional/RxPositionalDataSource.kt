@@ -21,16 +21,25 @@ abstract class RxPositionalDataSource<V>(
             return disposableDelegate.value
         }
 
-    override fun onLoadInitial(params: LoadInitialParams, callback: LoadInitialCallback<V>) {
-        val single = onLoad(params.requestedStartPosition, params.requestedLoadSize)
+    final override fun onLoadInitial(params: LoadInitialParams, callback: LoadInitialCallback<V>) {
+        val single = onLoadInitial(params.requestedStartPosition, params.requestedLoadSize)
         if (scheduler == null) {
-            onSuccessResult(single.blockingGetWithoutWrap(), params, callback)
+            val (list, frontPosition, total) = single.blockingGetWithoutWrap()
+            if (total == null) {
+                onSuccessResult(list, frontPosition, params, callback)
+            } else {
+                onSuccessResult(list, frontPosition, total, params, callback)
+            }
         } else {
             disposable.add(
                 single.subscribeOn(scheduler)
                     .observeOn(scheduler)
-                    .subscribe({
-                        onSuccessResult(it, params, callback)
+                    .subscribe({ (list, frontPosition, total) ->
+                        if (total == null) {
+                            onSuccessResult(list, frontPosition, params, callback)
+                        } else {
+                            onSuccessResult(list, frontPosition, total, params, callback)
+                        }
                     }, {
                         onFailedResult(it, params, callback)
                     })
@@ -38,8 +47,8 @@ abstract class RxPositionalDataSource<V>(
         }
     }
 
-    override fun onLoadRange(params: LoadRangeParams, callback: LoadRangeCallback<V>) {
-        val single = onLoad(params.startPosition, params.loadSize)
+    final override fun onLoadRange(params: LoadRangeParams, callback: LoadRangeCallback<V>) {
+        val single = onLoadRange(params.startPosition, params.loadSize)
         if (scheduler == null) {
             onSuccessResult(single.blockingGetWithoutWrap(), params, callback)
         } else {
@@ -56,5 +65,16 @@ abstract class RxPositionalDataSource<V>(
     }
 
     @Throws(Throwable::class)
-    protected abstract fun onLoad(startPosition: Int, loadSize: Int): Single<List<V>>
+    protected abstract fun onLoadInitial(startPosition: Int, loadSize: Int): Single<InitialResult<V>>
+
+    @Throws(Throwable::class)
+    protected abstract fun onLoadRange(startPosition: Int, loadSize: Int): Single<List<V>>
+
+    protected fun result(list: List<V>, frontPosition: Int, total: Int): InitialResult<V> = InitialResult(list, frontPosition, total)
+
+    protected data class InitialResult<V>(
+        val list: List<V>,
+        val frontPosition: Int,
+        val total: Int? = null
+    )
 }

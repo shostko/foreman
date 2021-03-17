@@ -6,9 +6,6 @@ import androidx.paging.ItemKeyedDataSource
 import by.shostko.statushandler.Status
 import by.shostko.statushandler.StatusHandler
 import by.shostko.statushandler.paging.*
-import by.shostko.statushandler.paging.Logger
-import by.shostko.statushandler.paging.updateAppend
-import by.shostko.statushandler.paging.updatePrepend
 
 abstract class BaseItemKeyedDataSource<K, V>(
     private val statusHandlerCallback: StatusHandler.Callback
@@ -85,7 +82,21 @@ abstract class BaseItemKeyedDataSource<K, V>(
     @Throws(Throwable::class)
     protected abstract fun onLoadBefore(params: LoadParams<K>, callback: LoadCallback<V>)
 
-    protected fun onSuccessResult(
+    protected fun onSuccessResultInitial(
+        list: List<V>,
+        position: Int,
+        total: Int,
+        params: LoadInitialParams<K>,
+        callback: LoadInitialCallback<V>
+    ) {
+        if (!isInvalid) {
+            Logger.d(tag, "onSuccessResult %d items (position=%s; total=%s) for %s", list.size, position, total, params.asString())
+            updateStatus { it.updateRefresh(false, null) }
+            callback.onResult(list, position, total)
+        }
+    }
+
+    protected fun onSuccessResultInitial(
         list: List<V>,
         params: LoadInitialParams<K>,
         callback: LoadInitialCallback<V>
