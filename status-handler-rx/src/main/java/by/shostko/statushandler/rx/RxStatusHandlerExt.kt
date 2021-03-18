@@ -5,6 +5,7 @@ package by.shostko.statushandler.rx
 import by.shostko.statushandler.Status
 import by.shostko.statushandler.StatusHandler
 import by.shostko.statushandler.ValueHandler
+import io.reactivex.Flowable
 
 val StatusHandler.statusFlowable: InitialValueFlowable<Status>
     get() = StatusHandlerFlowable(this)
@@ -15,6 +16,9 @@ val <V : Any> ValueHandler<V>.valueFlowable: InitialValueFlowable<V>
     } else {
         ValueHandlerFlowable(this)
     }
+
+val <V : Any> ValueHandler<Flowable<V>>.valueFlowableFlatten: Flowable<V>
+    get() = this.valueFlowable.switchMap { it }
 
 private class StatusHandlerFlowable(
     private val statusHandler: StatusHandler

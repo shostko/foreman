@@ -12,7 +12,7 @@ import by.shostko.statushandler.paging.updateRefresh
 
 abstract class BasePositionalDataSource<V>(
     private val statusHandlerCallback: StatusHandler.Callback
-) : PositionalDataSource<V>(), PagingDataSource {
+) : PositionalDataSource<V>(), PagingController {
 
     protected open val tag: String = javaClass.simpleName
 

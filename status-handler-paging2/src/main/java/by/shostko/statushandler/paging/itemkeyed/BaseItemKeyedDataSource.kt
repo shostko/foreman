@@ -9,7 +9,7 @@ import by.shostko.statushandler.paging.*
 
 abstract class BaseItemKeyedDataSource<K, V>(
     private val statusHandlerCallback: StatusHandler.Callback
-) : ItemKeyedDataSource<K, V>(), PagingDataSource {
+) : ItemKeyedDataSource<K, V>(), PagingController {
 
     protected open val tag: String = javaClass.simpleName
 

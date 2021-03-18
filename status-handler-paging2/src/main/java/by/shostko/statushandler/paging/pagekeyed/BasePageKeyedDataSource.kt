@@ -12,7 +12,7 @@ import by.shostko.statushandler.paging.updatePrepend
 
 abstract class BasePageKeyedDataSource<K, V>(
     private val statusHandlerCallback: StatusHandler.Callback
-) : PageKeyedDataSource<K, V>(), PagingDataSource {
+) : PageKeyedDataSource<K, V>(), PagingController {
 
     protected open val tag: String = javaClass.simpleName
 
