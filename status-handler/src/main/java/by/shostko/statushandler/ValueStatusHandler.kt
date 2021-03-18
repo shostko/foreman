@@ -103,6 +103,7 @@ abstract class AbsValueHandler<V: Any> : ValueHandler<V> {
 
     protected val onValueListeners: MutableSet<ValueHandler.OnValueListener<V>> = HashSet()
 
+    @Synchronized
     protected fun notifyListeners(value: V) {
         onValueListeners.forEach { it.onValue(value) } // TODO synchronize
     }

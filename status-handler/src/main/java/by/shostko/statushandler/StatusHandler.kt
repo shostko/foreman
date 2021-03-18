@@ -58,6 +58,7 @@ abstract class AbsStatusHandler : StatusHandler {
 
     protected val onStatusListeners: MutableSet<StatusHandler.OnStatusListener> = HashSet()
 
+    @Synchronized
     protected fun notifyListeners(status: Status) {
         onStatusListeners.forEach { it.onStatus(status) } // TODO synchronize
     }
