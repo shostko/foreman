@@ -72,10 +72,10 @@ private class PagingValueStatusHandlerImpl<C : PagingController, V : Any>(
     override fun removeOnValueListener(listener: ValueHandler.OnValueListener<V>) = valueHandler.removeOnValueListener(listener)
 
     override fun retry() {
-        pagingController.value?.refresh()
+        pagingController.value?.retry()
     }
 
     override fun refresh() {
-        pagingController.value?.retry()
+        pagingController.value?.refresh()
     }
 }
