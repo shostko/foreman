@@ -40,8 +40,6 @@ internal class WrappedCallbackFlowableStatusHandler<V : Any>(
 
     private val actionProcessor: FlowableProcessor<Unit> = PublishProcessor.create()
 
-    private val started: AtomicBoolean = AtomicBoolean(false)
-
     override val actionFlowable: Flowable<Optional<Unit>> = actionProcessor.startOnce(Unit).map { Optional(it) }.share()
 
     override fun refresh() {
