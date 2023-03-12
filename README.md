@@ -1,4 +1,6 @@
-# StatusHandler
+# Foreman
+
+![Foreman Logo](/assets/playstore.svg)
 
 [![Maven Central](https://img.shields.io/maven-central/v/by.shostko/foreman?style=flat)](#integration) [![API-level](https://img.shields.io/badge/API-14+-blue?style=flat&logo=android)](https://source.android.com/setup/start/build-numbers) [![License](https://img.shields.io/badge/license-Apach%202.0-green?style=flat)](#license) 
 
