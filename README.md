@@ -1,43 +1,13 @@
 # StatusHandler
 
-[![Maven Central](https://img.shields.io/maven-central/v/by.shostko/status-handler?style=flat)](#integration) [![API-level](https://img.shields.io/badge/API-14+-blue?style=flat&logo=android)](https://source.android.com/setup/start/build-numbers) [![License](https://img.shields.io/badge/license-Apach%202.0-green?style=flat)](#license) 
+[![Maven Central](https://img.shields.io/maven-central/v/by.shostko/foreman?style=flat)](#integration) [![API-level](https://img.shields.io/badge/API-14+-blue?style=flat&logo=android)](https://source.android.com/setup/start/build-numbers) [![License](https://img.shields.io/badge/license-Apach%202.0-green?style=flat)](#license) 
 
 ## Integration
 
-The library is now available in Maven Central repository:
+The library is available in Maven Central repository:
 ```gradle
 dependencies {
-    implementation 'by.shostko:status-handler:0.+'
-}
-```
-
-For additional support of easy creation DataSources for paging, ViewModels and Workers add any of these:
-```gradle
-dependencies {
-    implementation 'by.shostko:status-handler-paging:0.+'
-    implementation 'by.shostko:status-handler-viewmodel:0.+'
-    implementation 'by.shostko:status-handler-worker:0.+'
-}
-```
-
-Also don't forget to additional mandatory dependencies:
-```gradle
-dependencies {
-    // for base module
-    implementation 'io.reactivex.rxjava2:rxjava:2.+' 
-    
-    // for paging module
-    implementation 'androidx.paging:paging-runtime:2.+'
-    
-    // for viewmodel module
-    implementation 'androidx.recyclerview:recyclerview:1.+'
-    implementation 'io.reactivex.rxjava2:rxjava:2.+'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.+''
-    annotationProcessor 'androidx.lifecycle:lifecycle-compiler:2.+'' // use kapt for kotlin
-    
-    // for worker module
-    implementation 'androidx.work:work-runtime-ktx:2.+'
-    implementation 'androidx.work:work-rxjava2:2.+'
+    implementation 'by.shostko:foreman:0.+'
 }
 ```
 
