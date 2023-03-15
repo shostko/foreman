@@ -1,7 +1,7 @@
 package by.shostko.foreman
 
 internal class CombinedWorker<T : Any?, E : Any>(
-    private val workers: ArrayList<Worker<T, E>>,
+    private val workers: List<Worker<T, E>>,
     private val strategy: ReportCombinationStrategy<T, E>,
     tag: String? = null,
 ) : Worker<T, E>(tag) {
@@ -29,7 +29,7 @@ internal class CombinedWorker<T : Any?, E : Any>(
     }
 }
 
-class DefaultReportCombinationStrategy<T : Any?, E : Any> : ReportCombinationStrategy<T, E> {
+open class DefaultReportCombinationStrategy<T : Any?, E : Any> : ReportCombinationStrategy<T, E> {
     override fun invoke(list: List<Report<T, E>>): Report<T, E> =
         list.firstOrNull { it is Report.Failed }
             ?: list.firstOrNull { it is Report.Working }
@@ -39,10 +39,20 @@ class DefaultReportCombinationStrategy<T : Any?, E : Any> : ReportCombinationStr
 }
 
 fun <T : Any?, E : Any> Foreman.combine(
+    workers: List<Worker<T, E>>,
+    tag: String? = null,
+    strategy: ReportCombinationStrategy<T, E> = DefaultReportCombinationStrategy(),
+): Worker<T, E> = CombinedWorker(
+    tag = tag,
+    workers = workers,
+    strategy = strategy,
+)
+
+fun <T : Any?, E : Any> Foreman.combine(
     worker1: Worker<T, E>,
     worker2: Worker<T, E>,
-    strategy: ReportCombinationStrategy<T, E> = DefaultReportCombinationStrategy(),
     tag: String? = null,
+    strategy: ReportCombinationStrategy<T, E> = DefaultReportCombinationStrategy(),
 ): Worker<T, E> = CombinedWorker(
     tag = tag,
     workers = arrayListOf(worker1, worker2),
@@ -51,8 +61,8 @@ fun <T : Any?, E : Any> Foreman.combine(
 
 fun <T : Any?, E : Any> Worker<T, E>.combineWith(
     other: Worker<T, E>,
-    strategy: ReportCombinationStrategy<T, E> = DefaultReportCombinationStrategy(),
     tag: String? = null,
+    strategy: ReportCombinationStrategy<T, E> = DefaultReportCombinationStrategy(),
 ): Worker<T, E> = CombinedWorker(
     tag = tag,
     workers = arrayListOf(this, other),

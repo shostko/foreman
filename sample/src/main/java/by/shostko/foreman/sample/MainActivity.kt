@@ -1,83 +1,132 @@
-@file:OptIn(ExperimentalCoroutinesApi::class)
-
 package by.shostko.foreman.sample
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.activity.viewModels
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.lifecycleScope
-import by.shostko.foreman.Foreman
+import by.shostko.foreman.Report
 import by.shostko.foreman.Worker
-import by.shostko.foreman.combineWith
 import by.shostko.foreman.sample.ui.theme.SampleTheme
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.flatMapConcat
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.onEach
 
 class MainActivity : ComponentActivity() {
 
-    private val worker1 = Foreman.prepare<String>("W1") {
-        delay(2000L)
-        "some result of worker #1"
-    }
-
-    private val worker2 = Foreman.prepare(
-        tag = "W2",
-        task = flowOf("1", "2", "3")
-            .onEach { delay(4000L) }
-            .flatMapConcat {
-                flowOf("${it}A", "${it}B", "${it}C")
-                    .onEach { delay(1000L) }
-            }
-    )
-
-    private val worker3 = Foreman.prepare<String>("W3") {
-        delay(10000L)
-        throw UnsupportedOperationException("Test error for Worker 3")
-    }
-
-    private val workerCombined = worker1.combineWith(worker2).combineWith(worker3, tag = "Combined")
+    private val viewModel: MainViewModel by viewModels { MainViewModel.factory() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            SampleTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    Column {
-                        SimpleWorkerRepresentation(worker1)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        SimpleWorkerRepresentation(worker2)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        SimpleWorkerRepresentation(worker3)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        SimpleWorkerRepresentation(workerCombined)
-                    }
-                }
-            }
+            SampleWorkersScreen(viewModel)
         }
-        worker1.launch(lifecycleScope)
-        worker2.launch(lifecycleScope)
-        worker3.launch(lifecycleScope)
     }
 }
 
 @Composable
-private fun SimpleWorkerRepresentation(worker: Worker<*,*>){
-    val report by worker.reportFlow.collectAsState()
-    Text(text = "${worker.tag}: $report")
+private fun SampleWorkersScreen(viewModel: MainViewModel) {
+    SampleTheme {
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+            ) {
+                Text(text = "Worker #1:")
+                SimpleWorkerRepresentation(viewModel.awesomeUnit)
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Divider(color = Color.Gray, thickness = 1.dp)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(text = "Worker #2:")
+                SimpleWorkerRepresentation(viewModel.awesomeValue)
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Divider(color = Color.Gray, thickness = 1.dp)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(text = "Worker #3:")
+                SimpleWorkerRepresentation(viewModel.parametrizedValue)
+                Button(onClick = viewModel::onSomeEvent) {
+                    Text(text = "Update param for #3")
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Divider(color = Color.Gray, thickness = 1.dp)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(text = "Worker #4:")
+                SimpleWorkerRepresentation(viewModel.loremValues)
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Divider(color = Color.Gray, thickness = 1.dp)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(text = "Worker #5:")
+                SimpleWorkerRepresentation(viewModel.neverSucceed)
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Divider(color = Color.Gray, thickness = 1.dp)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(text = "Default Combined Workers 2,3,4,5:")
+                SimpleWorkerRepresentation(viewModel.combinedDefault2345)
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Divider(color = Color.Gray, thickness = 1.dp)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(text = "Default Combined Workers 2,3,4:")
+                SimpleWorkerRepresentation(viewModel.combinedDefault234)
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Divider(color = Color.Gray, thickness = 1.dp)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(text = "Default Combined Workers 4,3,2:")
+                SimpleWorkerRepresentation(viewModel.combinedDefault432)
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Divider(color = Color.Gray, thickness = 1.dp)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(text = "Custom Combined Workers 2,3,4:")
+                SimpleWorkerRepresentation(viewModel.combinedCustom)
+            }
+        }
+    }
 }
 
+@Composable
+private fun SimpleWorkerRepresentation(worker: Worker<*, *>) {
+    Text(text = "TAG: ${worker.tag}")
+    val state by worker.reportFlow.collectAsState()
+    Box(
+        modifier = Modifier
+            .background(color = Color.LightGray.copy(alpha = 0.4F))
+            .padding(4.dp),
+    ) {
+        when (val report = state) {
+            is Report.Initial -> Text(text = "Pending")
+            is Report.Working -> Text(text = "Working")
+            is Report.Success -> Text(text = report.result.toString())
+            is Report.Failed -> Text(text = "Failed: ${report.error}")
+        }
+    }
+}
+
+@Composable
+@Preview(showSystemUi = true, showBackground = true, backgroundColor = 0xFF000000)
+private fun SampleWorkersScreenPreview() {
+    SampleWorkersScreen(MainViewModel(MainRepository()))
+}
