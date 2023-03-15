@@ -6,11 +6,7 @@ internal class MappedErrorWorker<T : Any?, E1 : Any, E2 : Any>(
     tag: String? = null,
 ) : Worker<T, E2>(tag) {
 
-    init {
-        source.addOnReportUpdatedListener(Listener())
-    }
-
-    private inner class Listener : OnReportUpdatedListener<T, E1> {
+    private val listener = object : OnReportUpdatedListener<T, E1> {
         override fun invoke(from: Report<T, E1>, to: Report<T, E1>) {
             when (to) {
                 is Report.Initial -> Report.Initial
@@ -19,6 +15,10 @@ internal class MappedErrorWorker<T : Any?, E1 : Any, E2 : Any>(
                 is Report.Failed -> Report.Failed(mapper(to.error))
             }
         }
+    }
+
+    init {
+        source.addOnReportUpdatedListener(listener)
     }
 }
 

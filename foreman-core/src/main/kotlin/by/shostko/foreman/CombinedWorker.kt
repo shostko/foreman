@@ -6,9 +6,13 @@ internal class CombinedWorker<T : Any?, E : Any>(
     tag: String? = null,
 ) : Worker<T, E>(tag) {
 
+    private val listeners = List(workers.size) {
+        Listener(it)
+    }
+
     init {
         workers.forEachIndexed { index, worker ->
-            worker.addOnReportUpdatedListener(Listener(index))
+            worker.addOnReportUpdatedListener(listeners[index])
         }
     }
 
