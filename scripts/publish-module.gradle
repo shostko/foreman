@@ -1,0 +1,80 @@
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+task androidSourcesJar(type: Jar) {
+    archiveClassifier.set('sources')
+    if (project.plugins.findPlugin("com.android.library")) {
+        from android.sourceSets.main.java.srcDirs
+        from android.sourceSets.main.kotlin.srcDirs
+    } else {
+        from sourceSets.main.java.srcDirs
+        from sourceSets.main.kotlin.srcDirs
+    }
+}
+
+task javadocJar(type: Jar) {
+    archiveClassifier.set('javadoc')
+}
+
+artifacts {
+    archives androidSourcesJar
+    archives javadocJar
+}
+
+group = PUBLISH_GROUP_ID
+version = PUBLISH_VERSION
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+
+                groupId PUBLISH_GROUP_ID
+                artifactId PUBLISH_ARTIFACT_ID
+                version PUBLISH_VERSION
+
+                if (project.plugins.findPlugin("com.android.library")) {
+                    from components.release
+                } else {
+                    from components.java
+                }
+
+                artifact androidSourcesJar
+                artifact javadocJar
+
+                pom {
+                    name = PUBLISH_ARTIFACT_ID
+                    description = 'Foreman - library to control and supervise workers'
+                    url = 'https://github.com/shostko/foreman'
+                    licenses {
+                        license {
+                            name = 'Apache 2.0 License'
+                            url = 'https://github.com/shostko/foreman/blob/master/LICENSE'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 's.shostko'
+                            name = 'Sergey Shostko'
+                            email = 's.shostko@gmail.com'
+                        }
+                    }
+                    scm {
+                        connection = 'scm:git:github.com/shostko/foreman.git'
+                        developerConnection = 'scm:git:ssh://github.com/shostko/foreman.git'
+                        url = 'https://github.com/shostko/foreman/tree/master'
+                    }
+                }
+            }
+        }
+    }
+}
+
+signing {
+    useInMemoryPgpKeys(
+            rootProject.ext["signing.keyId"],
+            rootProject.ext["signing.key"],
+            rootProject.ext["signing.password"],
+    )
+    sign publishing.publications
+}
