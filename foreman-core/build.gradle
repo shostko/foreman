@@ -1,0 +1,21 @@
+plugins {
+    id 'java-library'
+    id "org.jetbrains.kotlin.jvm" version "1.8.10"
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_7
+    targetCompatibility = JavaVersion.VERSION_1_7
+}
+
+dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0-Beta")
+}
+
+ext {
+    PUBLISH_GROUP_ID = 'by.shostko'
+    PUBLISH_VERSION = '0.6.0'
+    PUBLISH_ARTIFACT_ID = 'foreman'
+}
+
+apply from: "${rootProject.projectDir}/scripts/publish-module.gradle"
