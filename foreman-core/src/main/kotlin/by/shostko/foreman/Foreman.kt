@@ -28,7 +28,7 @@ object Foreman {
         tag = tag,
     )
 
-    fun <T> prepare(
+    fun <T> prepareFlow(
         tag: String? = null,
         task: Flow<T>,
     ) = FlowWorker(
@@ -36,7 +36,7 @@ object Foreman {
         tag = tag,
     )
 
-    fun <P, T> prepare(
+    fun <P, T> prepareFlow(
         tag: String? = null,
         task: suspend (P) -> Flow<T>,
     ) = FlowWorker1(
