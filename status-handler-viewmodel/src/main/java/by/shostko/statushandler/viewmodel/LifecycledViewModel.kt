@@ -15,7 +15,8 @@ abstract class LifecycledViewModel : ViewModel(), LifecycleOwner {
     }
     private val registry: LifecycleRegistry by registryDelegate
 
-    override fun getLifecycle(): Lifecycle = registry
+    override val lifecycle: Lifecycle
+        get() = registry
 
     @CallSuper
     override fun onCleared() {
