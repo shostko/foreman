@@ -2,17 +2,6 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-android-extensions'
-apply plugin: 'com.novoda.bintray-release'
-
-publish {
-    userOrg = 'shostko'
-    repoName = 'android'
-    groupId = 'by.shostko'
-    artifactId = 'status-handler-paging'
-    publishVersion = rootProject.ext.versionName
-    desc = 'Helper to handle statuses. Paging support'
-    website = 'https://github.com/shostko/status-handler'
-}
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -42,3 +31,11 @@ dependencies {
 afterEvaluate {
     generateReleaseBuildConfig.enabled = false
 }
+
+ext {
+    PUBLISH_GROUP_ID = 'by.shostko'
+    PUBLISH_VERSION = rootProject.ext.versionName
+    PUBLISH_ARTIFACT_ID = 'status-handler-paging'
+}
+
+apply from: "${rootProject.projectDir}/scripts/publish-module.gradle"
