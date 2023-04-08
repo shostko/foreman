@@ -1,6 +1,6 @@
 # StatusHandler
 
-[ ![Download](https://api.bintray.com/packages/shostko/android/status-handler/images/download.svg) ](https://bintray.com/shostko/android/status-handler/_latestVersion)
+[![Maven Central](https://img.shields.io/maven-central/v/by.shostko/status-handler?style=flat)](#integration)
 Helper to handle statuses
 
 ## Integration
