@@ -1,5 +1,6 @@
 package by.shostko.foreman
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,6 +12,8 @@ abstract class Worker<T : Any?, E : Any>(
     companion object {
         // required for ext
     }
+
+    abstract val scope: CoroutineScope
 
     private val reportFlowInitializer = lazy { MutableStateFlow<Report<T, E>>(Report.Initial) }
     private val reportFlowMutable by reportFlowInitializer

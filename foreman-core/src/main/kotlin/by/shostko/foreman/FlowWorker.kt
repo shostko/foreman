@@ -13,7 +13,7 @@ internal class FlowWorker<T : Any?> internal constructor(
     tag: String? = null,
 ) : NoParamWorker<T, Throwable>(tag) {
 
-    private val scope = scope ?: CoroutineScope(SupervisorJob())
+    override val scope = scope ?: CoroutineScope(SupervisorJob())
     private var job: Job? = null
 
     private val task: Flow<T> = task
@@ -34,7 +34,7 @@ internal class FlowWorker1<P : Any?, T : Any?> internal constructor(
     tag: String? = null,
 ) : OneParamWorker<P, T, Throwable>(tag) {
 
-    private val scope = scope ?: CoroutineScope(SupervisorJob())
+    override val scope = scope ?: CoroutineScope(SupervisorJob())
     private var job: Job? = null
 
     private val paramFlow: MutableSharedFlow<P> = MutableSharedFlow()

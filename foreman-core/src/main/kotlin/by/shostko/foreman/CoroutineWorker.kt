@@ -12,7 +12,7 @@ internal class CoroutineWorker<T : Any?> internal constructor(
     tag: String? = null,
 ) : NoParamWorker<T, Throwable>(tag) {
 
-    private val scope = scope ?: CoroutineScope(SupervisorJob())
+    override val scope = scope ?: CoroutineScope(SupervisorJob())
     private var job: Job? = null
 
     override fun launch() {
@@ -37,7 +37,7 @@ internal class CoroutineWorker1<P : Any?, T : Any?> internal constructor(
     tag: String? = null,
 ) : OneParamWorker<P, T, Throwable>(tag) {
 
-    private val scope = scope ?: CoroutineScope(SupervisorJob())
+    override val scope = scope ?: CoroutineScope(SupervisorJob())
     private var job: Job? = null
 
     override fun launch(param: P) {
