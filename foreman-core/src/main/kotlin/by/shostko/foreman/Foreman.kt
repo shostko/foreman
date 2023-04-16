@@ -43,20 +43,4 @@ object Foreman {
         task = task,
         tag = tag,
     )
-
-    fun <T> prepareDirect(
-        tag: String? = null,
-        task: () -> T,
-    ) = DirectWorker(
-        task = task,
-        tag = tag,
-    )
-
-    fun <P, T> prepareDirect(
-        tag: String? = null,
-        task: (P) -> T,
-    ) = DirectWorker1(
-        task = task,
-        tag = tag,
-    )
 }
