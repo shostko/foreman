@@ -4,22 +4,20 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
 import kotlin.coroutines.cancellation.CancellationException
 
-class CoroutineWorker<T : Any?> internal constructor(
+internal class CoroutineWorker<T : Any?> internal constructor(
     private val task: suspend () -> T,
-    private val scope: CoroutineScope? = null,
+    scope: CoroutineScope? = null,
     tag: String? = null,
-) : Worker<T, Throwable>(tag) {
+) : NoParamWorker<T, Throwable>(tag) {
 
-    private val defaultScope by lazy { CoroutineScope(SupervisorJob()) }
+    private val scope = scope ?: CoroutineScope(SupervisorJob())
     private var job: Job? = null
 
-    fun launch(scope: CoroutineScope? = null) {
+    override fun launch() {
         job?.cancel(CancellationException("Cancelling this cause launching new job for this worker!"))
-        val scopeToUse = scope ?: this.scope ?: defaultScope
-        job = scopeToUse.launch {
+        job = scope.launch {
             try {
                 save(Report.Working)
                 val result = task()
@@ -33,23 +31,18 @@ class CoroutineWorker<T : Any?> internal constructor(
     }
 }
 
-class CoroutineWorker1<P : Any?, T : Any?> internal constructor(
+internal class CoroutineWorker1<P : Any?, T : Any?> internal constructor(
     private val task: suspend (P) -> T,
-    private val scope: CoroutineScope? = null,
+    scope: CoroutineScope? = null,
     tag: String? = null,
-) : Worker<T, Throwable>(tag) {
+) : OneParamWorker<P, T, Throwable>(tag) {
 
-    private val defaultScope by lazy { CoroutineScope(SupervisorJob()) }
+    private val scope = scope ?: CoroutineScope(SupervisorJob())
     private var job: Job? = null
 
-    fun push(param: P) {
-        launch(param, null)
-    }
-
-    fun launch(param: P, scope: CoroutineScope? = null) {
+    override fun launch(param: P) {
         job?.cancel(CancellationException("Cancelling this cause launching new job for this worker!"))
-        val scopeToUse = scope ?: this.scope ?: defaultScope
-        job = scopeToUse.launch {
+        job = scope.launch {
             try {
                 save(Report.Working)
                 val result = task(param)
