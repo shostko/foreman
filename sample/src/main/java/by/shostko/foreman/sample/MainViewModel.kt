@@ -3,7 +3,11 @@ package by.shostko.foreman.sample
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import by.shostko.foreman.*
+import by.shostko.foreman.Foreman
+import by.shostko.foreman.Report
+import by.shostko.foreman.combine
+import by.shostko.foreman.combineWith
+import kotlinx.coroutines.cancel
 
 class MainViewModel(
     private val repository: MainRepository,
@@ -17,11 +21,11 @@ class MainViewModel(
         }
     }
 
-    val awesomeUnit = Foreman.prepare("unit", repository::doAwesomeWork)
-    val awesomeValue = Foreman.prepare("value", repository::getAwesomeValue)
-    val parametrizedValue = Foreman.prepare("param", repository::getParametrizedValue)
-    val loremValues = Foreman.prepare("lorem", repository.observeLoremValues())
-    val neverSucceed = Foreman.prepare("fails", repository::neverSucceed)
+    val awesomeUnit = Foreman.prepareAndLaunch(viewModelScope, "unit", repository::doAwesomeWork)
+    val awesomeValue = Foreman.prepareAndLaunch(viewModelScope, "value", repository::getAwesomeValue)
+    val parametrizedValue = Foreman.prepareAndLaunch(System.currentTimeMillis(), viewModelScope, "param", repository::getParametrizedValue)
+    val loremValues = Foreman.prepareAndLaunchFlow(viewModelScope, "lorem", repository.observeLoremValues())
+    val neverSucceed = Foreman.prepareAndLaunch(viewModelScope, "fails", repository::neverSucceed)
     val combinedDefault2345 = awesomeValue
         .combineWith(parametrizedValue)
         .combineWith(loremValues)
@@ -56,15 +60,7 @@ class MainViewModel(
         }
     }
 
-    init {
-        awesomeUnit.launch(viewModelScope)
-        awesomeValue.launch(viewModelScope)
-        parametrizedValue.launch(System.currentTimeMillis(), viewModelScope)
-        loremValues.launch(viewModelScope)
-        neverSucceed.launch(viewModelScope)
-    }
-
     fun onSomeEvent() {
-        parametrizedValue.launch(System.currentTimeMillis(), viewModelScope)
+        parametrizedValue.launch(System.currentTimeMillis())
     }
 }
