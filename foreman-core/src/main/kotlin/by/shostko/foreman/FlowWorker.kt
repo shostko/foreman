@@ -52,3 +52,31 @@ internal class FlowWorker1<P : Any?, T : Any?> internal constructor(
         paramFlow.tryEmit(param)
     }
 }
+
+@OptIn(ExperimentalCoroutinesApi::class)
+internal class FlowWorker2<P1 : Any?, P2 : Any?, T : Any?> internal constructor(
+    task: suspend (P1, P2) -> Flow<T>,
+    scope: CoroutineScope? = null,
+    tag: String? = null,
+) : TwoParamWorker<P1, P2, T, Throwable>(tag) {
+
+    override val scope = scope ?: CoroutineScope(SupervisorJob())
+    private var job: Job? = null
+
+    private val paramFlow: MutableSharedFlow<Pair<P1, P2>> = MutableSharedFlow()
+
+    private val task: Flow<T> = paramFlow
+        .flatMapLatest { (param1, param2) ->
+            task(param1, param2)
+        }
+        .onStart { save(Report.Working) }
+        .onEach { save(Report.Success(it)) }
+        .catch { save(Report.Failed(it)) }
+
+    override fun launch(param1: P1, param2: P2) {
+        if (job == null) {
+            job = task.launchIn(scope)
+        }
+        paramFlow.tryEmit(param1 to param2)
+    }
+}

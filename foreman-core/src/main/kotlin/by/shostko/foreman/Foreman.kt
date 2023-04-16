@@ -33,6 +33,16 @@ object Foreman {
     fun <P, T> prepareAndLaunch(param: P, scope: CoroutineScope?, task: suspend (P) -> T) = prepare(scope, task).apply { launch(param) }
     fun <P, T> prepareAndLaunch(param: P, scope: CoroutineScope?, tag: String?, task: suspend (P) -> T) = prepare(scope, tag, task).apply { launch(param) }
 
+    fun <P1, P2, T> prepare(task: suspend (P1, P2) -> T): TwoParamWorker<P1, P2, T, Throwable> = CoroutineWorker2(task = task)
+    fun <P1, P2, T> prepare(tag: String?, task: suspend (P1, P2) -> T): TwoParamWorker<P1, P2, T, Throwable> = CoroutineWorker2(task = task, tag = tag)
+    fun <P1, P2, T> prepare(scope: CoroutineScope?, task: suspend (P1, P2) -> T): TwoParamWorker<P1, P2, T, Throwable> = CoroutineWorker2(task = task, scope = scope)
+    fun <P1, P2, T> prepare(scope: CoroutineScope?, tag: String?, task: suspend (P1, P2) -> T): TwoParamWorker<P1, P2, T, Throwable> = CoroutineWorker2(task = task, scope = scope, tag = tag)
+
+    fun <P1, P2, T> prepareAndLaunch(param1: P1, param2:P2, task: suspend (P1, P2) -> T) = prepare(task).apply { launch(param1, param2) }
+    fun <P1, P2, T> prepareAndLaunch(param1: P1, param2:P2, tag: String?, task: suspend (P1, P2) -> T) = prepare(tag, task).apply { launch(param1, param2) }
+    fun <P1, P2, T> prepareAndLaunch(param1: P1, param2:P2, scope: CoroutineScope?, task: suspend (P1, P2) -> T) = prepare(scope, task).apply { launch(param1, param2) }
+    fun <P1, P2, T> prepareAndLaunch(param1: P1, param2: P2, scope: CoroutineScope?, tag: String?, task: suspend (P1, P2) -> T) = prepare(scope, tag, task).apply { launch(param1, param2) }
+
     fun <T> prepareFlow(task: Flow<T>): NoParamWorker<T, Throwable> = FlowWorker(task = task)
     fun <T> prepareFlow(tag: String?, task: Flow<T>): NoParamWorker<T, Throwable> = FlowWorker(task = task, tag = tag)
     fun <T> prepareFlow(scope: CoroutineScope?, task: Flow<T>): NoParamWorker<T, Throwable> = FlowWorker(task = task, scope = scope)
@@ -52,4 +62,14 @@ object Foreman {
     fun <P, T> prepareAndLaunchFlow(param: P, tag: String?, task: suspend (P) -> Flow<T>) = prepareFlow(tag, task).apply { launch(param) }
     fun <P, T> prepareAndLaunchFlow(param: P, scope: CoroutineScope?, task: suspend (P) -> Flow<T>) = prepareFlow(scope, task).apply { launch(param) }
     fun <P, T> prepareAndLaunchFlow(param: P, scope: CoroutineScope?, tag: String?, task: suspend (P) -> Flow<T>) = prepareFlow(scope, tag, task).apply { launch(param) }
+
+    fun <P1, P2, T> prepareFlow(task: suspend (P1, P2) -> Flow<T>): TwoParamWorker<P1, P2, T, Throwable> = FlowWorker2(task = task)
+    fun <P1, P2, T> prepareFlow(tag: String?, task: suspend (P1, P2) -> Flow<T>): TwoParamWorker<P1, P2, T, Throwable> = FlowWorker2(task = task, tag = tag)
+    fun <P1, P2, T> prepareFlow(scope: CoroutineScope?, task: suspend (P1, P2) -> Flow<T>): TwoParamWorker<P1, P2, T, Throwable> = FlowWorker2(task = task, scope = scope)
+    fun <P1, P2, T> prepareFlow(scope: CoroutineScope?, tag: String?, task: suspend (P1, P2) -> Flow<T>): TwoParamWorker<P1, P2, T, Throwable> = FlowWorker2(task = task, scope = scope, tag = tag)
+
+    fun <P1, P2, T> prepareAndLaunchFlow(param1: P1, param2: P2, task: suspend (P1, P2) -> Flow<T>) = prepareFlow(task).apply { launch(param1, param2) }
+    fun <P1, P2, T> prepareAndLaunchFlow(param1: P1, param2: P2, tag: String?, task: suspend (P1, P2) -> Flow<T>) = prepareFlow(tag, task).apply { launch(param1, param2) }
+    fun <P1, P2, T> prepareAndLaunchFlow(param1: P1, param2: P2, scope: CoroutineScope?, task: suspend (P1, P2) -> Flow<T>) = prepareFlow(scope, task).apply { launch(param1, param2) }
+    fun <P1, P2, T> prepareAndLaunchFlow(param1: P1, param2: P2, scope: CoroutineScope?, tag: String?, task: suspend (P1, P2) -> Flow<T>) = prepareFlow(scope, tag, task).apply { launch(param1, param2) }
 }
