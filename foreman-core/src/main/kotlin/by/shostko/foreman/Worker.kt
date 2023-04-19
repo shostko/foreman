@@ -13,8 +13,6 @@ abstract class Worker<T : Any?, E : Any>(
         // required for ext
     }
 
-    abstract val scope: CoroutineScope
-
     private val reportFlowInitializer = lazy { MutableStateFlow<Report<T, E>>(Report.Initial) }
     private val reportFlowMutable by reportFlowInitializer
     val reportFlow: StateFlow<Report<T, E>> by lazy {
@@ -60,17 +58,20 @@ abstract class Worker<T : Any?, E : Any>(
 abstract class NoParamWorker<T : Any?, E : Any>(
     tag: String? = null,
 ) : Worker<T, E>(tag) {
+    abstract val scope: CoroutineScope
     abstract fun launch()
 }
 
 abstract class OneParamWorker<P : Any?, T : Any?, E : Any>(
     tag: String? = null,
 ) : Worker<T, E>(tag) {
+    abstract val scope: CoroutineScope
     abstract fun launch(param: P)
 }
 
 abstract class TwoParamWorker<P1 : Any?, P2 : Any?, T : Any?, E : Any>(
     tag: String? = null,
 ) : Worker<T, E>(tag) {
+    abstract val scope: CoroutineScope
     abstract fun launch(param1: P1, param2: P2)
 }
