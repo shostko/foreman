@@ -31,5 +31,23 @@ sealed class Report<out T : Any?, out E : Any> {
 
     val resultOrNull: T?
         get() = (this as? Success)?.result
+
+    fun <T2 : Any?> mapIfSuccess(
+        mapper: (T) -> T2,
+    ): Report<T2, E> = when (this) {
+        Initial -> Initial
+        Working -> Working
+        is Failed -> this
+        is Success -> Success(mapper(result))
+    }
+
+    fun <E2 : Any> mapIfFailed(
+        mapper: (E) -> E2,
+    ): Report<T, E2> = when (this) {
+        Initial -> Initial
+        Working -> Working
+        is Success -> this
+        is Failed -> Failed(mapper(error))
+    }
 }
 

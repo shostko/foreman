@@ -1,10 +1,10 @@
 package by.shostko.foreman
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.lang.ref.WeakReference
-import java.util.WeakHashMap
 
 abstract class Worker<T : Any?, E : Any>(
     val tag: String? = null,
@@ -46,11 +46,32 @@ abstract class Worker<T : Any?, E : Any>(
     }
 
     fun removeOnReportUpdatedListener(listener: OnReportUpdatedListener<T, E>) {
-        listeners.removeAll { it.get() == listener}
+        listeners.removeAll { it.get() == listener }
     }
 
     internal fun save(report: Report<T, E>) {
         this.report = report
         Foreman.log(tag, report)
     }
+}
+
+abstract class NoParamWorker<T : Any?, E : Any>(
+    tag: String? = null,
+) : Worker<T, E>(tag) {
+    abstract val scope: CoroutineScope
+    abstract fun launch()
+}
+
+abstract class OneParamWorker<P : Any?, T : Any?, E : Any>(
+    tag: String? = null,
+) : Worker<T, E>(tag) {
+    abstract val scope: CoroutineScope
+    abstract fun launch(param: P)
+}
+
+abstract class TwoParamWorker<P1 : Any?, P2 : Any?, T : Any?, E : Any>(
+    tag: String? = null,
+) : Worker<T, E>(tag) {
+    abstract val scope: CoroutineScope
+    abstract fun launch(param1: P1, param2: P2)
 }
